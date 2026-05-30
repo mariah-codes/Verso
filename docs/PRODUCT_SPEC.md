@@ -1,0 +1,180 @@
+# Product Spec
+
+*Verso V1 — what we're building and why.*
+
+**Last updated:** 2026-05-30
+
+---
+
+## Problem
+
+Young professionals who used to read have stopped, for two reasons:
+1. They don't know what to read next, and the recommendation sources they have don't help: algorithmic suggestions and social video don't match their taste, and star ratings need decoding (you have to already know that 4.0 means something different for non-fiction than for fiction, and that the scale is compressed into a narrow band).
+2. The tools for tracking books don't fit them. Goodreads has a different demographic and a different aesthetic — it serves committed long-time users well, but doesn't fit the taste-conscious reader who left it behind. The alternative for most of this demo is iPhone Notes — or nothing.
+
+The result: no memory of what they've read, no recommendations they trust, no social discovery layer.
+
+## Who it's for
+
+The lapsed-bookworm version of a thoughtful young professional. 25-35 year olds in NYC, LA, SF, and London who read 5-15 books a year, used to read more, have strong but underused taste, and want their reading to feel social with their actual friends.
+
+## Thesis
+
+The most useful book recommendations come from a small circle of friends with great taste. Verso makes that mechanism explicit:
+- Rank what you've read so the app learns your taste
+- See your friends sorted by taste-match
+- Browse their shelves and steal what to read next
+- A small weekly surface of picks does the algorithmic work for you
+
+## Core loop
+
+Open the app → see this week's picks (3-5 books surfaced from friends' shelves matching your taste) → tap to add to want-to-read → finish a book → pairwise rank it → your top 10 evolves → friends see your taste shift → repeat.
+
+## Differentiation
+
+| | Goodreads | StoryGraph | Verso |
+|---|---|---|---|
+| Rating | 5 stars | 5 stars + mood tags | Pairwise + tiers |
+| Orientation | Tracking + reviews | Analytics-forward | Social-forward |
+| Discovery | Algorithm + strangers | Stats + recommendations | Friend taste-match |
+| DNF | Shelf-based, public | Tracked | Private, recs filter |
+| Privacy | Public | Configurable | Per-book toggle |
+| Aesthetic | Dated, cluttered | Functional, data-heavy | Editorial, restrained |
+| Home screen | Activity feed | Stats dashboard | Weekly picks + feed |
+
+Goodreads serves committed long-time trackers. StoryGraph wins on analytics and mood-based recommendations for people who love reading data. Verso is the social-discovery layer for a small trusted circle — the answer to "what should I read next?" comes from friends whose taste you actually trust, wrapped in a design that fits the demo.
+
+---
+
+## V1 scope
+
+Four tabs. No more.
+
+### Tab 1 — Home
+
+**"This week's picks"** — horizontal scroll of 3-5 book covers, refreshed weekly, surfaced from friends' shelves based on taste-match weighting. Tap → book detail → add to want-to-read.
+
+**"From your circle"** — vertical feed, infinite scroll. High-signal events only:
+- Friend ranked a finished book
+- Friend added to want-to-read
+- Friend's book cracked their top 10
+
+Reactions inline (see below).
+
+Excluded from feed: "started reading," generic likes, app-meta events, milestone achievements.
+
+### Tab 2 — Friends
+
+List of friends sorted by taste-match score descending. Each row: avatar, name, match %, single small line showing currently-reading title. No cover strip in the row — too cluttered on mobile. Tap → friend profile.
+
+### Tab 3 — Search / Add
+
+Search bar querying Open Library API. Results as cards. Tap → action menu (Read / Reading / Want to read). If Read → pairwise ranking. Goodreads CSV import button at bottom.
+
+### Tab 4 — You (Profile)
+
+Top to bottom:
+1. Avatar, name, edit button
+2. Taste signature one-liner (factual stats only)
+3. **Top 5 — horizontal scroll of covers** (hero artifact)
+4. Currently reading (1-3 cards)
+5. Want to read next (top 5 visible, "see all" expands)
+6. **Milestones — small horizontal scroll of earned badges**
+7. Full ranked shelf (scrollable)
+8. **DNF list** (small tappable section at bottom)
+
+---
+
+## Key flows
+
+### Onboarding (target: 90 seconds—2 minutes)
+
+1. Sign up with Apple/Google
+2. Name + photo
+3. **Cover grid:** tap covers from a curated 50-book grid. Aim for 8-12 taps.
+4. Optional Goodreads CSV import
+5. Pairwise rank tapped books (binary search, ~15 comparisons for 10 books)
+6. Find friends — phone contacts or invite code
+7. Land on home with picks populated
+
+### Pairwise ranking
+
+1. Mark book as finished
+2. Tier prompt: "How was it? Loved it / Liked it / It was fine"
+3. Pairwise comparisons within tier (3-5 matchups, binary search)
+4. Position revealed
+5. If cracks top 10 → optional "What stayed with you?" prompt
+
+### Stop reading flow
+
+1. On currently-reading → "Stop reading"
+2. Prompt: "Save for later or DNF?"
+3. **Save for later** → back to want-to-read with `was_started` flag
+4. **DNF** → moves to DNF list (private, excluded from recs, can be resurrected)
+
+### Multiple currently-reading
+
+- Cap at 3 books
+- 4th attempt prompts to set aside one
+- Ordered by most recent interaction
+
+---
+
+## Reactions and comments
+
+Three small outline icons with counts on each feed item:
+- **Flame outline** — "this is fire / I agree this is great"
+- **Smile outline** — "ha, love this / nice take"
+- **Comment bubble outline** — tap to expand the thread
+
+Tapping the comment bubble expands the conversation inline (or modal). Comments are contextual to the specific event (e.g., "Sarah ranked Demon Copperhead at #2") — not generic book reviews. Comments are first-class in V1. This is where the fun lives — friend banter on rankings, hot takes, sassy reactions.
+
+---
+
+## Milestones
+
+Small, tasteful, *private* achievements visible on profile only. Never feed events. No daily-streak guilt.
+
+Examples:
+- "10 books finished"
+- "First 5-tier book ranked"
+- "3 genres in 2026"
+- "Top 10% reader among your friends"
+- "First DNF" (tongue-in-cheek)
+- "Translated fiction enjoyer" (3+)
+- "Just finished your 5th romance"
+
+Visual: monochrome on cream, terracotta accent for earned, small (~50px), text-driven. Reference Spotify Wrapped, not Duolingo.
+
+Placement: dedicated horizontal scrollable strip mid-profile (below want-to-read, above shelf).
+
+---
+
+## Privacy model
+
+Lives at the book level, not the profile level:
+
+- Profiles visible to anyone signed in (default social behavior)
+- One-way follow — anyone follows anyone, no approval needed (scales to following readers whose taste you trust, beyond personal friends)
+- **Per-book "private to me" toggle** — hides book from profile and feed events but still counts toward taste-match math
+
+This separates what the algorithm sees from what friends see. Users log honestly, recommendations stay accurate, embarrassing reads stay private.
+
+If users later request full profile privacy, that's V2.
+
+---
+
+## What's intentionally NOT in V1
+
+See `ROADMAP.md` for the V2+ parking lot.
+
+Key cuts:
+- No highlights/capture (different product)
+- No progress tracking on currently-reading
+- No AI taste tags
+- No public/global feed
+- No "send a recommendation" (pull, not push)
+- No streaks
+- No native iOS (PWA only for V1)
+- No currently-reading on home screen
+- No hosted video content (the follow graph + future frictionless capture handle social-content discovery)
