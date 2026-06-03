@@ -1,0 +1,248 @@
+"use client"
+
+import { useEffect, useRef, useState } from "react"
+import Image from "next/image"
+import { X, CheckCheck, BookOpen, Bookmark } from "lucide-react"
+import { addBookToShelf, type BookStatus } from "@/lib/books"
+import type { BookSearchResult } from "@/lib/open-library"
+
+interface BookActionMenuProps {
+  book: BookSearchResult | null
+  userId: string
+  onClose: () => void
+  /** Called after a successful shelf add so the parent can show feedback */
+  onSuccess: (book: BookSearchResult, status: BookStatus) => void
+}
+
+const STATUS_OPTIONS: {
+  status: BookStatus
+  label: string
+  sublabel: string
+  icon: React.ReactNode
+}[] = [
+  {
+    status: "finished",
+    label: "Read it",
+    sublabel: "Mark as finished",
+    icon: <CheckCheck className="size-5" />,
+  },
+  {
+    status: "reading",
+    label: "Reading it",
+    sublabel: "Currently reading",
+    icon: <BookOpen className="size-5" />,
+  },
+  {
+    status: "want_to_read",
+    label: "Want to read it",
+    sublabel: "Save for later",
+    icon: <Bookmark className="size-5" />,
+  },
+]
+
+/**
+ * Mobile-first bottom sheet that lets the user pick a shelf status for a book.
+ * Traps focus and restores it on close.
+ */
+export function BookActionMenu({
+  book,
+  userId,
+  onClose,
+  onSuccess,
+}: BookActionMenuProps) {
+  const [submitting, setSubmitting] = useState<BookStatus | null>(null)
+  const [sheetError, setSheetError] = useState<string | null>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  const isOpen = !!book
+
+  // Focus the panel when it opens so keyboard / screen-reader users can use it
+  useEffect(() => {
+    if (isOpen) {
+      panelRef.current?.focus()
+      setSheetError(null)
+    }
+  }, [isOpen])
+
+  // Close on Escape key
+  useEffect(() => {
+    if (!isOpen) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose()
+    }
+    document.addEventListener("keydown", onKey)
+    return () => document.removeEventListener("keydown", onKey)
+  }, [isOpen, onClose])
+
+  async function handleSelect(status: BookStatus) {
+    if (!book || submitting) return
+    setSubmitting(status)
+    setSheetError(null)
+
+    const { error } = await addBookToShelf(book, status, userId)
+
+    setSubmitting(null)
+
+    if (error) {
+      setSheetError(error)
+      return
+    }
+
+    onSuccess(book, status)
+    onClose()
+  }
+
+  return (
+    <>
+      {/* ── Backdrop ─────────────────────────────────────────────────────── */}
+      <div
+        aria-hidden="true"
+        onClick={onClose}
+        className={[
+          "fixed inset-0 z-40 bg-black/40 transition-opacity duration-300",
+          isOpen ? "opacity-100" : "opacity-0 pointer-events-none",
+        ].join(" ")}
+      />
+
+      {/* ── Sheet panel ──────────────────────────────────────────────────── */}
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Add to shelf"
+        tabIndex={-1}
+        className={[
+          "fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-2xl bg-background",
+          "shadow-[0_-4px_32px_rgba(0,0,0,0.12)] outline-none",
+          "transition-transform duration-300 ease-out",
+          isOpen ? "translate-y-0" : "translate-y-full",
+        ].join(" ")}
+      >
+        {/* Drag handle */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="h-1 w-10 rounded-full bg-foreground/10" />
+        </div>
+
+        {/* Book preview header */}
+        {book && (
+          <div className="flex items-start gap-4 px-5 pt-3 pb-4 border-b border-border">
+            {/* Mini cover */}
+            <div className="relative w-12 aspect-[2/3] rounded-lg overflow-hidden bg-muted shrink-0">
+              {book.coverUrl ? (
+                <Image
+                  src={book.coverUrl}
+                  alt=""
+                  fill
+                  sizes="48px"
+                  className="object-cover"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-muted" />
+              )}
+            </div>
+
+            {/* Title / author */}
+            <div className="flex-1 min-w-0 pt-0.5 space-y-0.5">
+              <p
+                className="text-base font-medium text-foreground leading-snug line-clamp-2"
+                style={{ fontFamily: "var(--font-serif)" }}
+              >
+                {book.title}
+              </p>
+              <p className="text-sm text-foreground/60 line-clamp-1">
+                {book.author}
+                {book.year ? ` · ${book.year}` : ""}
+              </p>
+            </div>
+
+            {/* Close button */}
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              className="shrink-0 p-1 -mr-1 rounded-full text-foreground/40 hover:text-foreground transition-colors"
+            >
+              <X className="size-5" />
+            </button>
+          </div>
+        )}
+
+        {/* Status options */}
+        <div className="px-4 py-3 space-y-2">
+          {STATUS_OPTIONS.map(({ status, label, sublabel, icon }) => {
+            const isThis = submitting === status
+            const anySubmitting = submitting !== null
+
+            return (
+              <button
+                key={status}
+                onClick={() => handleSelect(status)}
+                disabled={anySubmitting}
+                className={[
+                  "flex items-center gap-4 w-full rounded-xl px-4 py-3.5",
+                  "text-left transition-colors",
+                  "disabled:opacity-50 disabled:cursor-not-allowed",
+                  isThis
+                    ? "bg-[#9C4A2F]/10 text-[#9C4A2F]"
+                    : "bg-muted/60 hover:bg-muted text-foreground",
+                ].join(" ")}
+              >
+                <span
+                  className={
+                    isThis ? "text-[#9C4A2F]" : "text-foreground/50"
+                  }
+                >
+                  {isThis ? (
+                    <Spinner />
+                  ) : (
+                    icon
+                  )}
+                </span>
+                <span className="flex flex-col">
+                  <span className="text-sm font-medium">{label}</span>
+                  <span className="text-xs text-foreground/50">{sublabel}</span>
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        {sheetError && (
+          <p className="px-5 pb-4 text-sm text-destructive text-center">
+            {sheetError}
+          </p>
+        )}
+
+        {/* Safe area spacer for devices with home indicator */}
+        <div className="pb-safe h-6" />
+      </div>
+    </>
+  )
+}
+
+function Spinner() {
+  return (
+    <svg
+      className="size-5 animate-spin"
+      fill="none"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      {/* Faint full circle — track */}
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+        stroke="#9C4A2F"
+        strokeWidth="2.5"
+        strokeOpacity="0.2"
+      />
+      {/* ~270° arc — the spinning head */}
+      <path
+        d="M12 3a9 9 0 0 1 9 9"
+        stroke="#9C4A2F"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
