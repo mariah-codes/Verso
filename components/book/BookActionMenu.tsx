@@ -6,12 +6,18 @@ import { X, CheckCheck, BookOpen, Bookmark } from "lucide-react"
 import { addBookToShelf, type BookStatus } from "@/lib/books"
 import type { BookSearchResult } from "@/lib/open-library"
 
+export interface BookAddedIds {
+  bookId: string
+  userBookId: string
+}
+
 interface BookActionMenuProps {
   book: BookSearchResult | null
   userId: string
   onClose: () => void
-  /** Called after a successful shelf add so the parent can show feedback */
-  onSuccess: (book: BookSearchResult, status: BookStatus) => void
+  /** Called after a successful shelf add. ids contains the Supabase row IDs
+   *  so the caller can open the ranking flow without another round-trip. */
+  onSuccess: (book: BookSearchResult, status: BookStatus, ids: BookAddedIds) => void
 }
 
 const STATUS_OPTIONS: {
@@ -79,17 +85,19 @@ export function BookActionMenu({
     setSubmitting(status)
     setSheetError(null)
 
-    const { error } = await addBookToShelf(book, status, userId)
+    const { error, bookId, userBookId } = await addBookToShelf(book, status, userId)
 
     setSubmitting(null)
 
-    if (error) {
-      setSheetError(error)
+    if (error || !bookId || !userBookId) {
+      setSheetError(error ?? "Something went wrong")
       return
     }
 
-    onSuccess(book, status)
-    onClose()
+    onSuccess(book, status, { bookId, userBookId })
+    // For "finished" the parent will open the ranking flow — don't close here;
+    // the parent controls when to close so the sheet doesn't flicker.
+    if (status !== "finished") onClose()
   }
 
   return (

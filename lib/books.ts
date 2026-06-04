@@ -10,24 +10,33 @@ export type BookStatus = "want_to_read" | "reading" | "finished" | "dnf"
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any
 
+export interface AddBookResult {
+  error: string | null
+  /** books.id — null on error */
+  bookId: string | null
+  /** user_books.id — null on error. Needed to open the ranking flow. */
+  userBookId: string | null
+}
+
 /**
  * Upserts a book from Open Library into the `books` table (keyed on
  * `open_library_id`), then creates or updates the `user_books` row for the
  * current user with the given status.
  *
- * Returns `{ error: string }` on failure or `{ error: null }` on success.
+ * Returns the Supabase IDs so the caller can open the ranking flow
+ * without a second round-trip.
  */
 export async function addBookToShelf(
   book: BookSearchResult,
   status: BookStatus,
-  userId: string
-): Promise<{ error: string | null }> {
+  userId: string,
+): Promise<AddBookResult> {
+  const fail = (msg: string): AddBookResult => ({ error: msg, bookId: null, userBookId: null })
+
   // ── 1. Ensure the book exists in the reference table ─────────────────────
-  // `upsert` with ignoreDuplicates:true sends `Prefer: resolution=ignore-duplicates`
-  // to PostgREST, which silently skips the row when open_library_id already
-  // exists — no error, no UPDATE. We use a separate SELECT to get the id in
-  // either case. Note: `insert(..., { ignoreDuplicates: true })` does NOT work
-  // — that option only exists on `upsert`.
+  // `upsert` with ignoreDuplicates:true silently skips when open_library_id
+  // already exists — no error, no UPDATE. We SELECT afterwards to get the id
+  // regardless of whether we just inserted or it pre-existed.
   const { error: upsertError } = await db.from("books").upsert(
     {
       open_library_id: book.openLibraryId,
@@ -36,15 +45,14 @@ export async function addBookToShelf(
       cover_url: book.coverUrl ?? "",
       published_year: book.year,
     },
-    { onConflict: "open_library_id", ignoreDuplicates: true }
+    { onConflict: "open_library_id", ignoreDuplicates: true },
   )
 
   if (upsertError) {
     console.error("[books] upsert error:", upsertError)
-    return { error: upsertError.message }
+    return fail(upsertError.message)
   }
 
-  // Fetch the canonical row (works whether we just inserted or it pre-existed).
   const { data: bookRow, error: fetchError } = await db
     .from("books")
     .select("id")
@@ -53,28 +61,48 @@ export async function addBookToShelf(
 
   if (fetchError || !bookRow) {
     console.error("[books] fetch error:", fetchError)
-    return { error: fetchError?.message ?? "Could not retrieve book" }
+    return fail(fetchError?.message ?? "Could not retrieve book")
   }
 
   // ── 2. Upsert the user↔book relationship ─────────────────────────────────
-  // On conflict (same user_id + book_id) we update the status — e.g. moving
-  // a book from "want_to_read" to "finished".
-  const { error: ubError } = await db.from("user_books").upsert(
-    {
-      user_id: userId,
-      book_id: bookRow.id,
-      status,
-      visibility: "visible",
-      was_started: status === "reading" || status === "finished",
-      finished_at: status === "finished" ? new Date().toISOString() : null,
-    },
-    { onConflict: "user_id,book_id" }
-  )
+  const { data: ubData, error: ubError } = await db
+    .from("user_books")
+    .upsert(
+      {
+        user_id: userId,
+        book_id: bookRow.id,
+        status,
+        visibility: "visible",
+        was_started: status === "reading" || status === "finished",
+        finished_at: status === "finished" ? new Date().toISOString() : null,
+      },
+      { onConflict: "user_id,book_id" },
+    )
+    .select("id")
+    .single()
 
   if (ubError) {
     console.error("[books] user_books upsert error:", ubError)
-    return { error: ubError.message }
+    return fail(ubError.message)
   }
 
-  return { error: null }
+  return { error: null, bookId: bookRow.id, userBookId: ubData.id }
+}
+
+/**
+ * Moves a "reading" book to "finished" so the ranking flow can open.
+ * The ranking flow then sets tier, rank_position, and score.
+ */
+export async function markAsFinished(
+  userBookId: string,
+): Promise<{ error: string | null }> {
+  const { error } = await db
+    .from("user_books")
+    .update({
+      status: "finished",
+      was_started: true,
+      finished_at: new Date().toISOString(),
+    })
+    .eq("id", userBookId)
+  return { error: error?.message ?? null }
 }

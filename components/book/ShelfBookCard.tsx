@@ -2,6 +2,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { BookOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { formatScore } from "@/lib/ranking"
 import type { ShelfBook } from "@/lib/profile"
 
 interface ShelfBookCardProps {
@@ -53,9 +54,20 @@ export function ShelfBookCard({
 
       {/* Metadata */}
       <div className="space-y-0.5 px-0.5">
-        <p className="text-xs font-medium text-foreground leading-snug line-clamp-2">
-          {book.title}
-        </p>
+        {/* Title + score on one row: title truncates, score stays put */}
+        <div className="flex items-baseline justify-between gap-1.5">
+          <p className="text-xs font-medium text-foreground leading-snug truncate min-w-0">
+            {book.title}
+          </p>
+          {book.score !== null && (
+            <span
+              className="text-sm font-bold shrink-0 tabular-nums"
+              style={{ fontFamily: "var(--font-serif)", color: "#9C4A2F" }}
+            >
+              {formatScore(book.score)}
+            </span>
+          )}
+        </div>
         <p className="text-[10px] text-foreground/55 line-clamp-1">
           {book.author}
         </p>

@@ -6,6 +6,14 @@ Most recent first. Each entry: date, decision, reasoning.
 
 ---
 
+## 2026-06-03
+
+**Per-book numeric score: frozen on assignment, not recomputed when other books are added.** Score is derived from where the book lands in its tier band (loved 8–10, liked 5–7.9, fine 1–4.9) — midpoint of its two neighbors at insertion time, then fixed. Only an explicit re-rank changes it. Gated: no score shown until 10 books are finished. Adds a nullable `score` column to user_books.
+
+**"Too tough to call" in pairwise comparisons resolves as a tie.** New book takes the same score as the comparison book and sits directly below it in the ranking.
+
+---
+
 ## 2026-05-30
 
 **BookTok / social-video integration considered and deferred.** The friction of capturing books from a social video (watching a "5 books that..." reel, then switching apps to add them) is real. But hosting video content in Verso would mean competing with TikTok and Instagram on their own turf, would contradict the trusted-friend-taste thesis, and would require creator content that won't exist at 50-100 users. The right form of the idea is frictionless *capture* (share-sheet + paste-a-list parsing) and *creator shelves* via the existing follow graph — both parked for V2. No video hosting.

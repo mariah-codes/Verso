@@ -24,6 +24,8 @@ export interface ShelfBook {
   status: string
   tier: string | null
   rankPosition: number | null
+  /** Frozen 0–10 score; null until the user crosses the display threshold. */
+  score: number | null
   addedAt: string
   finishedAt: string | null
 }
@@ -41,6 +43,7 @@ function rowToShelfBook(row: any): ShelfBook {
     status: row.status,
     tier: row.tier ?? null,
     rankPosition: row.rank_position ?? null,
+    score: row.score ?? null,
     addedAt: row.added_at,
     finishedAt: row.finished_at ?? null,
   }
@@ -52,6 +55,7 @@ const SHELF_SELECT = `
   status,
   tier,
   rank_position,
+  score,
   added_at,
   finished_at,
   books (
@@ -85,21 +89,33 @@ export async function fetchProfile(
 
 /**
  * Fetches user_books rows joined with books for a given status.
- * Finished books are ordered by finished_at desc; others by added_at desc.
+ * Finished books: primary sort score desc (highest score first), secondary
+ * sort tier asc then rank_position asc so pre-threshold books (null score)
+ * still appear in a sensible order at the bottom.
+ * Other shelves: added_at desc (newest first).
  */
 export async function fetchShelf(
   userId: string,
   status: "reading" | "want_to_read" | "finished" | "dnf",
   limit?: number
 ): Promise<ShelfBook[]> {
-  const orderCol = status === "finished" ? "finished_at" : "added_at"
+  const isFinished = status === "finished"
 
   let q = db
     .from("user_books")
     .select(SHELF_SELECT)
     .eq("user_id", userId)
     .eq("status", status)
-    .order(orderCol, { ascending: false })
+
+  if (isFinished) {
+    // score desc (nulls last) → tier → rank_position within tier
+    q = q
+      .order("score",         { ascending: false, nullsFirst: false })
+      .order("tier",          { ascending: true  })
+      .order("rank_position", { ascending: true,  nullsFirst: false })
+  } else {
+    q = q.order("added_at", { ascending: false })
+  }
 
   if (limit !== undefined) q = q.limit(limit)
 
