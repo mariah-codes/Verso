@@ -10,7 +10,7 @@ export default function Home() {
         Verso
       </h1>
       <p className="mt-4 text-sm text-foreground/50 font-sans tracking-widest uppercase">
-        Your reading life, shared
+        Your bookshelf, shared
       </p>
 
       <div className="mt-10 flex flex-col items-center gap-3 w-full max-w-xs">
