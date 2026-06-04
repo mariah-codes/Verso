@@ -2,7 +2,16 @@
 
 *What's in V1, what's deferred, and what comes next.*
 
-**Last updated:** 2026-05-30
+**Last updated:** 2026-06-04
+
+---
+
+## Open questions — pending user research
+
+- **Profile structure:** full ranked shelf on profile tab vs. collapsed 
+  behind "see all" vs. dedicated shelf tab. Depends on how often users 
+  want to browse their own/friends' full shelves. Ask in user 
+  research calls.
 
 ---
 

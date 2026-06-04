@@ -1,15 +1,452 @@
+"use client"
+
+import { useCallback, useEffect, useRef, useState } from "react"
+import Image from "next/image"
+import { BookOpen, Search, UserPlus, X } from "lucide-react"
+import { supabase } from "@/lib/supabase"
+import { useDebounce } from "@/hooks/use-debounce"
+import {
+  followUser,
+  unfollowUser,
+  getFollowing,
+  searchUsers,
+  type FollowingUser,
+  type SearchResult,
+} from "@/lib/follows"
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
 export default function FriendsPage() {
+  const [userId, setUserId]             = useState<string | null>(null)
+  const [query, setQuery]               = useState("")
+  const debouncedQuery                  = useDebounce(query, 300)
+
+  // Search
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
+  const [searching, setSearching]         = useState(false)
+
+  // Following list
+  const [following, setFollowing]           = useState<FollowingUser[]>([])
+  const [followingLoading, setFollowingLoading] = useState(true)
+
+  // Per-user optimistic lock — prevents double-taps
+  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set())
+
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+
+  const loadFollowing = useCallback(async (uid: string) => {
+    const result = await getFollowing(uid)
+    setFollowing(result)
+    setFollowingLoading(false)
+  }, [])
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      const uid = data.user?.id
+      if (!uid) return
+      setUserId(uid)
+      loadFollowing(uid)
+    })
+  }, [loadFollowing])
+
+  // ── Search ────────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (!userId || !debouncedQuery.trim()) {
+      setSearchResults([])
+      setSearching(false)
+      return
+    }
+    setSearching(true)
+    searchUsers(debouncedQuery, userId).then((results) => {
+      setSearchResults(results)
+      setSearching(false)
+    })
+  }, [debouncedQuery, userId])
+
+  // ── Follow / Unfollow ─────────────────────────────────────────────────────
+
+  async function handleFollow(target: SearchResult) {
+    if (!userId || pendingIds.has(target.id)) return
+    setPendingIds((s) => new Set(s).add(target.id))
+
+    // Optimistic: flip button + prepend to following list immediately
+    setSearchResults((prev) =>
+      prev.map((u) => (u.id === target.id ? { ...u, isFollowing: true } : u)),
+    )
+    const optimisticEntry: FollowingUser = {
+      id: target.id,
+      displayName: target.displayName,
+      photoUrl: target.photoUrl,
+      currentlyReading: null,
+    }
+    setFollowing((prev) => [optimisticEntry, ...prev])
+
+    const { error } = await followUser(userId, target.id)
+
+    if (error) {
+      // Revert both
+      setSearchResults((prev) =>
+        prev.map((u) => (u.id === target.id ? { ...u, isFollowing: false } : u)),
+      )
+      setFollowing((prev) => prev.filter((u) => u.id !== target.id))
+    }
+
+    setPendingIds((s) => { const n = new Set(s); n.delete(target.id); return n })
+  }
+
+  async function handleUnfollow(targetId: string) {
+    if (!userId || pendingIds.has(targetId)) return
+    setPendingIds((s) => new Set(s).add(targetId))
+
+    // Optimistic: drop from following + flip any matching search result.
+    // (Dropping from `following` also un-filters them back into search results.)
+    setFollowing((prev) => prev.filter((u) => u.id !== targetId))
+    setSearchResults((prev) =>
+      prev.map((u) => (u.id === targetId ? { ...u, isFollowing: false } : u)),
+    )
+
+    const { error } = await unfollowUser(userId, targetId)
+
+    if (error) {
+      // Revert — reload the following list to restore the dropped entry
+      setSearchResults((prev) =>
+        prev.map((u) => (u.id === targetId ? { ...u, isFollowing: true } : u)),
+      )
+      loadFollowing(userId)
+    }
+
+    setPendingIds((s) => { const n = new Set(s); n.delete(targetId); return n })
+  }
+
+  // ── Derived ───────────────────────────────────────────────────────────────
+
+  const isQuerying  = !!query.trim()
+
+  // The search section is for finding NEW people — exclude anyone already in the
+  // following list. Driven by `following` (the single source of truth), so the
+  // moment you tap Follow they leave search and appear below, no refresh needed.
+  const followingIds   = new Set(following.map((u) => u.id))
+  const newPeople      = searchResults.filter((u) => !followingIds.has(u.id))
+
+  // Two distinct empty cases so we can show appropriate copy
+  const genuinelyEmpty     = isQuerying && !searching && searchResults.length === 0
+  const allAlreadyFollowed = isQuerying && !searching && searchResults.length > 0 && newPeople.length === 0
+  const showResults        = isQuerying && !searching && newPeople.length > 0
+
+  // ── Render ────────────────────────────────────────────────────────────────
+
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 gap-2">
-      <h1
-        className="text-2xl text-foreground/70"
-        style={{ fontFamily: "var(--font-serif)" }}
-      >
-        Friends
-      </h1>
-      <p className="text-sm text-foreground/40 font-sans">
-        Taste-match scores &amp; friend shelves — coming soon.
-      </p>
+    <div className="min-h-screen bg-background pb-20">
+
+      {/* ── Sticky search bar ──────────────────────────────────────────────── */}
+      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3">
+        <div className="relative flex items-center">
+          <Search className="absolute left-3 size-4 text-foreground/40 pointer-events-none" />
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Find people by name…"
+            autoComplete="off"
+            autoCorrect="off"
+            spellCheck={false}
+            className={[
+              "w-full h-10 rounded-xl border border-input bg-muted/50",
+              "pl-9 pr-9 text-sm text-foreground placeholder:text-foreground/40",
+              "outline-none focus:border-ring focus:ring-2 focus:ring-ring/30 transition-all",
+            ].join(" ")}
+          />
+          {query && (
+            <button
+              onClick={() => { setQuery(""); inputRef.current?.focus() }}
+              aria-label="Clear search"
+              className="absolute right-3 text-foreground/40 hover:text-foreground transition-colors"
+            >
+              <X className="size-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="px-4 py-5">
+
+        {/* ── Search mode ──────────────────────────────────────────────────── */}
+        {isQuerying && (
+          <section>
+            {searching && (
+              <div className="flex justify-center pt-10">
+                <Spinner />
+              </div>
+            )}
+
+            {genuinelyEmpty && (
+              <div className="flex flex-col items-center pt-12 gap-2 text-center">
+                <p
+                  className="text-base text-foreground/60"
+                  style={{ fontFamily: "var(--font-serif)" }}
+                >
+                  No one found
+                </p>
+                <p className="text-sm text-foreground/40">Try a different name.</p>
+              </div>
+            )}
+
+            {allAlreadyFollowed && (
+              <div className="pt-12 text-center">
+                <p className="text-sm text-foreground/40">
+                  Already following everyone by this name.
+                </p>
+              </div>
+            )}
+
+            {showResults && (
+              <>
+                <SectionLabel>People</SectionLabel>
+                <ul className="mt-3 space-y-0.5">
+                  {newPeople.map((user) => (
+                    <li key={user.id}>
+                      <SearchUserRow
+                        user={user}
+                        pending={pendingIds.has(user.id)}
+                        onFollow={() => handleFollow(user)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </section>
+        )}
+
+        {/* ── Following list ──────────────────────────────────────────────────
+            Always mounted — even while searching — so optimistic follow/unfollow
+            updates are visible in the same view without a refresh. When a search
+            is active it sits below the results, separated by a divider. */}
+        <section className={isQuerying ? "mt-8 pt-6 border-t border-border" : ""}>
+          <SectionLabel>Following</SectionLabel>
+
+          {followingLoading ? (
+            <ul className="mt-3 space-y-0.5">
+              {[1, 2, 3].map((i) => <li key={i}><UserRowSkeleton /></li>)}
+            </ul>
+          ) : following.length === 0 ? (
+            <div className="mt-5 py-6 text-center">
+              <p className="text-sm text-foreground/40 leading-relaxed">
+                Find people whose taste you trust.
+              </p>
+            </div>
+          ) : (
+            <ul className="mt-3 space-y-0.5">
+              {following.map((user) => (
+                <li key={user.id}>
+                  <FollowingUserRow
+                    user={user}
+                    pending={pendingIds.has(user.id)}
+                    onUnfollow={() => handleUnfollow(user.id)}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+      </div>
     </div>
+  )
+}
+
+// ── Sub-components ─────────────────────────────────────────────────────────────
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="text-xs font-semibold tracking-widest uppercase text-foreground/50 font-sans">
+      {children}
+    </h2>
+  )
+}
+
+function UserAvatar({
+  photoUrl,
+  displayName,
+}: {
+  photoUrl: string | null
+  displayName: string
+}) {
+  const initials = displayName
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase()
+
+  return (
+    <div className="size-10 rounded-full overflow-hidden bg-[#9C4A2F]/10 shrink-0 flex items-center justify-center">
+      {photoUrl ? (
+        <Image
+          src={photoUrl}
+          alt=""
+          width={40}
+          height={40}
+          className="object-cover size-full"
+          referrerPolicy="no-referrer"
+        />
+      ) : (
+        <span
+          className="text-sm font-medium text-[#9C4A2F]"
+          style={{ fontFamily: "var(--font-serif)" }}
+        >
+          {initials}
+        </span>
+      )}
+    </div>
+  )
+}
+
+function SearchUserRow({
+  user,
+  pending,
+  onFollow,
+}: {
+  user: SearchResult
+  pending: boolean
+  onFollow: () => void
+}) {
+  // Only un-followed people reach this row — followed users are filtered out of
+  // search and live in the Following list below. So this is always a "Follow".
+  return (
+    <div className="flex items-center gap-3 py-2.5 px-1">
+      <UserAvatar photoUrl={user.photoUrl} displayName={user.displayName} />
+      <span className="flex-1 text-sm font-medium text-foreground truncate min-w-0">
+        {user.displayName}
+      </span>
+      <button
+        onClick={onFollow}
+        disabled={pending}
+        className={[
+          "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium",
+          "text-white hover:opacity-90 transition-all active:scale-[0.97]",
+          "disabled:opacity-50 shrink-0",
+        ].join(" ")}
+        style={{ backgroundColor: "#9C4A2F" }}
+      >
+        {pending ? <SmallSpinner /> : <><UserPlus className="size-3.5" />Follow</>}
+      </button>
+    </div>
+  )
+}
+
+function FollowingUserRow({
+  user,
+  pending,
+  onUnfollow,
+}: {
+  user: FollowingUser
+  pending: boolean
+  onUnfollow: () => void
+}) {
+  const [confirming, setConfirming] = useState(false)
+  const pillRef = useRef<HTMLButtonElement>(null)
+
+  // Reset to "Following" when the user taps anywhere outside the pill.
+  // setTimeout(0) defers listener attachment so the tap that opened
+  // confirmation doesn't immediately re-close it via bubbling.
+  useEffect(() => {
+    if (!confirming) return
+    function onOutsideClick(e: MouseEvent) {
+      if (pillRef.current && !pillRef.current.contains(e.target as Node)) {
+        setConfirming(false)
+      }
+    }
+    const id = setTimeout(() => document.addEventListener("click", onOutsideClick), 0)
+    return () => { clearTimeout(id); document.removeEventListener("click", onOutsideClick) }
+  }, [confirming])
+
+  function handlePillClick() {
+    if (confirming) {
+      setConfirming(false)
+      onUnfollow()          // parent handles optimistic removal + revert on error
+    } else {
+      setConfirming(true)   // first tap: enter confirmation state
+    }
+  }
+
+  return (
+    <div className="flex items-center gap-3 py-2.5 px-1">
+      <UserAvatar photoUrl={user.photoUrl} displayName={user.displayName} />
+
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-foreground truncate">
+          {user.displayName}
+        </p>
+        {user.currentlyReading && (
+          <p className="flex items-center gap-1 text-xs text-foreground/40 mt-0.5 min-w-0">
+            <BookOpen className="size-3 shrink-0" />
+            <span className="truncate">{user.currentlyReading}</span>
+          </p>
+        )}
+      </div>
+
+      {/* Right side — match label + pill on one line */}
+      <div className="flex items-center gap-2 shrink-0">
+        {/* Match score — "—" until Day 8 wires up taste-match */}
+        <span className="text-xs text-foreground/40 font-sans tabular-nums">
+          Match: —
+        </span>
+
+        {/* Two-tap unfollow pill */}
+        <button
+          ref={pillRef}
+          onClick={handlePillClick}
+          disabled={pending}
+          aria-label={
+            confirming
+              ? `Confirm unfollow ${user.displayName}`
+              : `Following ${user.displayName}`
+          }
+          className={[
+            "rounded-full border px-2.5 py-0.5 text-xs font-sans",
+            "transition-colors disabled:opacity-40",
+            confirming
+              ? "border-[#9C4A2F] text-[#9C4A2F]"
+              : "border-foreground/20 text-foreground/40 hover:border-foreground/35",
+          ].join(" ")}
+        >
+          {pending ? <SmallSpinner /> : confirming ? "Unfollow" : "Following"}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function UserRowSkeleton() {
+  return (
+    <div className="flex items-center gap-3 py-2.5 px-1">
+      <div className="size-10 rounded-full bg-muted animate-pulse shrink-0" />
+      <div className="flex-1 space-y-1.5">
+        <div className="h-3.5 w-36 rounded bg-muted animate-pulse" />
+        <div className="h-2.5 w-24 rounded bg-muted animate-pulse" />
+      </div>
+    </div>
+  )
+}
+
+function Spinner() {
+  return (
+    <svg className="size-6 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" stroke="#9C4A2F" strokeWidth="2.5" strokeOpacity="0.2" />
+      <path d="M12 3a9 9 0 0 1 9 9" stroke="#9C4A2F" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function SmallSpinner() {
+  return (
+    <svg className="size-3.5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.3" />
+      <path d="M12 3a9 9 0 0 1 9 9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
   )
 }
