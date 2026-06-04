@@ -106,3 +106,164 @@ export async function markAsFinished(
     .eq("id", userBookId)
   return { error: error?.message ?? null }
 }
+
+/**
+ * Decrements rank_position for every finished book in `tier` whose position
+ * is strictly greater than `fromPosition`. Call this after removing or
+ * re-ranking a book to close the gap it leaves behind.
+ */
+async function closeRankGap(
+  userId: string,
+  tier: string,
+  fromPosition: number,
+): Promise<void> {
+  const { data } = await db
+    .from("user_books")
+    .select("id, rank_position")
+    .eq("user_id", userId)
+    .eq("status", "finished")
+    .eq("tier", tier)
+    .gt("rank_position", fromPosition)
+
+  for (const row of (data ?? [])) {
+    await db
+      .from("user_books")
+      .update({ rank_position: row.rank_position - 1 })
+      .eq("id", row.id)
+  }
+}
+
+/**
+ * Changes a book's shelf status.
+ *
+ * Moving AWAY from finished clears tier, rank_position, score, finished_at and
+ * closes the gap so sibling books' positions stay contiguous.
+ * Moving TO finished sets finished_at — the ranking flow handles the rest.
+ */
+export async function changeBookStatus(
+  userBookId: string,
+  newStatus: BookStatus,
+  prevStatus: BookStatus,
+  userId: string,
+  prevTier: string | null,
+  prevRankPosition: number | null,
+): Promise<{ error: string | null }> {
+  const leavingFinished = prevStatus === "finished" && newStatus !== "finished"
+  const enteringFinished = newStatus === "finished"
+
+  // Close the rank gap before clearing position data
+  if (leavingFinished && prevTier && prevRankPosition !== null) {
+    await closeRankGap(userId, prevTier, prevRankPosition)
+  }
+
+  const updates: Record<string, unknown> = {
+    status: newStatus,
+    was_started: newStatus === "reading" || newStatus === "finished"
+      || prevStatus === "reading" || prevStatus === "finished",
+    ...(leavingFinished && {
+      tier: null,
+      rank_position: null,
+      score: null,
+      finished_at: null,
+    }),
+    ...(enteringFinished && {
+      finished_at: new Date().toISOString(),
+    }),
+  }
+
+  const { error } = await db
+    .from("user_books")
+    .update(updates)
+    .eq("id", userBookId)
+
+  return { error: error?.message ?? null }
+}
+
+/**
+ * Prepares a finished book for re-ranking: clears tier/rank_position/score,
+ * closes the gap in its tier, and leaves status=finished so the ranking flow
+ * can re-insert it at a new position.
+ *
+ * rankPosition may be null if the book was left in a broken half-state from
+ * an abandoned ranking — in that case we skip the gap-close (there's nothing
+ * to close) and just clear the fields.
+ */
+export async function clearRankingForRerank(
+  userBookId: string,
+  userId: string,
+  tier: string,
+  rankPosition: number | null,
+): Promise<{ error: string | null }> {
+  // Only close the gap when there's an actual ranked position to vacate
+  if (rankPosition !== null) {
+    await closeRankGap(userId, tier, rankPosition)
+  }
+
+  const { error } = await db
+    .from("user_books")
+    .update({ tier: null, rank_position: null, score: null })
+    .eq("id", userBookId)
+
+  return { error: error?.message ?? null }
+}
+
+/**
+ * Restores a book's ranking after a cancelled re-rank.
+ *
+ * `clearRankingForRerank` closed the gap (decremented positions > oldRankPosition).
+ * This function reopens it (increments positions >= oldRankPosition, excluding our
+ * book), then writes the original tier/rank_position/score back.
+ */
+export async function restoreRanking(
+  userBookId: string,
+  userId: string,
+  tier: string,
+  rankPosition: number,
+  score: number | null,
+): Promise<{ error: string | null }> {
+  // Reopen the gap: increment positions >= rankPosition for sibling books only
+  const { data } = await db
+    .from("user_books")
+    .select("id, rank_position")
+    .eq("user_id", userId)
+    .eq("status", "finished")
+    .eq("tier", tier)
+    .gte("rank_position", rankPosition)
+
+  for (const row of (data ?? [])) {
+    await db
+      .from("user_books")
+      .update({ rank_position: row.rank_position + 1 })
+      .eq("id", row.id)
+  }
+
+  // Restore the original ranking data on our book
+  const { error } = await db
+    .from("user_books")
+    .update({ tier, rank_position: rankPosition, score })
+    .eq("id", userBookId)
+
+  return { error: error?.message ?? null }
+}
+
+/**
+ * Permanently removes a book from the user's shelf.
+ * If the book was ranked, closes the position gap before deleting.
+ */
+export async function removeFromShelf(
+  userBookId: string,
+  userId: string,
+  tier: string | null,
+  rankPosition: number | null,
+): Promise<{ error: string | null }> {
+  if (tier && rankPosition !== null) {
+    await closeRankGap(userId, tier, rankPosition)
+  }
+
+  const { error } = await db
+    .from("user_books")
+    .delete()
+    .eq("id", userBookId)
+
+  return { error: error?.message ?? null }
+}

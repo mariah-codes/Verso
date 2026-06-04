@@ -337,12 +337,8 @@ export function RankingFlow({ book, userId, onClose, onComplete }: RankingFlowPr
           <RankingResult
             bookTitle={book.title}
             coverUrl={book.coverUrl}
-            tier={tier!}
-            rankPosition={finalRankPosition}
             finishedCount={finishedCount}
             score={newBookScore}
-            isTie={isTie}
-            tieWithTitle={tieWithBook?.title ?? null}
             overallRank={overallRank}
             userBookId={book.userBookId}
             onDone={() => { onComplete(); onClose() }}

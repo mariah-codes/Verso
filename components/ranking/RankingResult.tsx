@@ -3,24 +3,15 @@
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { BookOpen } from "lucide-react"
-import { formatScore, SCORE_DISPLAY_THRESHOLD, type Tier } from "@/lib/ranking"
+import { SCORE_DISPLAY_THRESHOLD } from "@/lib/ranking"
 import { saveBookNote } from "@/lib/ranking-data"
-
-const TIER_LABELS: Record<Tier, string> = {
-  loved: "loved",
-  liked: "liked",
-  fine: "fine",
-}
+import { ScoreDisplay } from "@/components/shared/ScoreDisplay"
 
 interface RankingResultProps {
   bookTitle: string
   coverUrl: string | null
-  tier: Tier
-  rankPosition: number          // 1-based, final position in tier
   finishedCount: number         // total finished books (post-ranking)
   score: number | null
-  isTie: boolean
-  tieWithTitle: string | null
   overallRank: number | null    // 1-based across all tiers; null = unknown
   userBookId: string
   onDone: () => void
@@ -29,12 +20,8 @@ interface RankingResultProps {
 export function RankingResult({
   bookTitle,
   coverUrl,
-  tier,
-  rankPosition,
   finishedCount,
   score,
-  isTie,
-  tieWithTitle,
   overallRank,
   userBookId,
   onDone,
@@ -69,15 +56,7 @@ export function RankingResult({
     setTimeout(() => setShowNote(false), 800)
   }
 
-  // ── Copy ──────────────────────────────────────────────────────────────────
-
-  const positionLine = isTie && tieWithTitle
-    ? `About the same as ${tieWithTitle}`
-    : `Your #${rankPosition} ${TIER_LABELS[tier]}`
-
-  const scoreLine = isAboveThreshold && score !== null
-    ? `${formatScore(score)}`
-    : null
+  const showScore = isAboveThreshold && score !== null
 
   return (
     <div className="flex flex-col items-center gap-6 px-6 py-10">
@@ -108,17 +87,9 @@ export function RankingResult({
           >
             {bookTitle}
           </h2>
-          <div className="flex items-center justify-center gap-2 flex-wrap">
-            {scoreLine && (
-              <>
-                <span className="text-2xl font-bold tabular-nums" style={{ color: "#9C4A2F" }}>
-                  {scoreLine}
-                </span>
-                <span className="text-foreground/30">·</span>
-              </>
-            )}
-            <span className="text-sm text-foreground/60">{positionLine}</span>
-          </div>
+          {showScore && (
+            <ScoreDisplay score={score!} className="text-3xl" />
+          )}
         </div>
       </div>
 

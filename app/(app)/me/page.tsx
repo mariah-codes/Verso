@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { Pencil, BookOpen, BookMarked, Trophy, Ban } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { Pencil, LogOut, BookOpen, BookMarked, Trophy, Ban } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { markAsFinished } from "@/lib/books"
 import { runSeedIfNeeded } from "@/lib/ranking-data"
@@ -24,11 +25,17 @@ interface PageData {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function MePage() {
+  const router = useRouter()
   const [data, setData]           = useState<PageData | null>(null)
   const [loading, setLoading]     = useState(true)
   const [userId, setUserId]       = useState<string | null>(null)
   const [rankingBook, setRankingBook] = useState<NewBookInfo | null>(null)
   const [markingId, setMarkingId] = useState<string | null>(null) // userBookId being marked
+
+  async function handleLogout() {
+    await supabase.auth.signOut()
+    router.push("/")
+  }
 
   const load = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser()
@@ -77,13 +84,23 @@ export default function MePage() {
       <div className="min-h-screen bg-background pb-16">
         {/* ── Header ──────────────────────────────────────────────────────── */}
         <div className="relative px-6 pt-12 pb-6 flex flex-col items-center gap-3">
-          <Link
-            href="/settings"
-            aria-label="Edit profile"
-            className="absolute top-10 right-5 p-2 rounded-full text-foreground/40 hover:text-foreground hover:bg-muted transition-colors"
-          >
-            <Pencil className="size-[18px]" />
-          </Link>
+          {/* Edit + logout — top-right */}
+          <div className="absolute top-10 right-5 flex items-center gap-1">
+            <Link
+              href="/settings"
+              aria-label="Edit profile"
+              className="p-2 rounded-full text-foreground/40 hover:text-foreground hover:bg-muted transition-colors"
+            >
+              <Pencil className="size-[18px]" />
+            </Link>
+            <button
+              onClick={handleLogout}
+              aria-label="Log out"
+              className="p-2 rounded-full text-foreground/40 hover:text-foreground hover:bg-muted transition-colors"
+            >
+              <LogOut className="size-[18px]" />
+            </button>
+          </div>
 
           <div className="size-20 rounded-full overflow-hidden bg-muted ring-2 ring-border shrink-0">
             {profile?.photoUrl ? (
