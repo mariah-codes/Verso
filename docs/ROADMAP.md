@@ -46,6 +46,13 @@ The minimum honest version of Verso. See `PRODUCT_SPEC.md` for details.
 Things that are good ideas but deliberately not in V1. Date added in parentheses.
 
 ### Probably yes for V2
+- **Friends' average score on book detail** (2026-06-04) — alongside your own 
+  score on the book detail page, show the average score your friends have given 
+  that book (e.g. "You: 10.0 · Friends: 8.4"). If no friends have rated it, 
+  show "—". Beli-style: no minimum threshold, just show what exists. Requires 
+  fetching all followed users' user_books rows for a given book and averaging 
+  their scores. Build after taste-match (Day 8) since it shares the same 
+  friends-who-rated-this query pattern.
 - **Notes / mini-reviews on any finished book** (2026-06-04) — currently the "what stayed with you?" note only appears when a book cracks the top 10. Extend it so any finished book can have an optional short note (Letterboxd-style), surfaced on the result screen and book detail page. Fills the empty space on the result screen and adds a light personal-reflection layer without becoming full reviews.
 - **Frictionless multi-book capture** (2026-05-30) — share-sheet target + paste-a-list parsing, so users can add every book from a social video / newsletter / tweet without leaving the source or typing titles one by one. Important: this is *capture*, not *content hosting* — the video stays on its platform; Verso removes the friction of getting those books onto your shelf.
 - **Creator / public-figure shelves** (2026-05-30) — let notable readers have discoverable Verso profiles so the follow graph extends beyond personal friends. A reader whose taste you trust (including a social-media book creator, if they join) becomes a follow, and their ranked shelf is the discovery surface — no video needed. Ties to approve-only privacy mode.

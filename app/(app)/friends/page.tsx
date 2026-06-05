@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { BookOpen, Search, UserPlus, X } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useDebounce } from "@/hooks/use-debounce"
@@ -375,19 +376,21 @@ function FollowingUserRow({
 
   return (
     <div className="flex items-center gap-3 py-2.5 px-1">
-      <UserAvatar photoUrl={user.photoUrl} displayName={user.displayName} />
-
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground truncate">
-          {user.displayName}
-        </p>
-        {user.currentlyReading && (
-          <p className="flex items-center gap-1 text-xs text-foreground/40 mt-0.5 min-w-0">
-            <BookOpen className="size-3 shrink-0" />
-            <span className="truncate">{user.currentlyReading}</span>
+      {/* Left side taps → friend profile. Pill stays outside the link. */}
+      <Link href={`/user/${user.id}`} className="flex items-center gap-3 flex-1 min-w-0">
+        <UserAvatar photoUrl={user.photoUrl} displayName={user.displayName} />
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-foreground truncate">
+            {user.displayName}
           </p>
-        )}
-      </div>
+          {user.currentlyReading && (
+            <p className="flex items-center gap-1 text-xs text-foreground/40 mt-0.5 min-w-0">
+              <BookOpen className="size-3 shrink-0" />
+              <span className="truncate">{user.currentlyReading}</span>
+            </p>
+          )}
+        </div>
+      </Link>
 
       {/* Right side — match label + pill on one line */}
       <div className="flex items-center gap-2 shrink-0">
