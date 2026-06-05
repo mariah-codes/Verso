@@ -7,6 +7,8 @@ import { BookMarked, BookOpen, ChevronLeft, Trophy } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { fetchProfile, fetchShelf, type UserProfile, type ShelfBook } from "@/lib/profile"
 import { followUser, isFollowing, unfollowUser } from "@/lib/follows"
+import { getTasteMatch } from "@/lib/taste-match-data"
+import type { TasteMatchResult } from "@/lib/taste-match"
 import { ShelfBookCard, ShelfBookCardSkeleton } from "@/components/book/ShelfBookCard"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -30,6 +32,8 @@ export default function UserProfilePage() {
   const [notFound, setNotFound]           = useState(false)
   const [following, setFollowing]         = useState(false)
   const [followPending, setFollowPending] = useState(false)
+  const [match, setMatch]                 = useState<TasteMatchResult | null>(null)
+  const [matchLoading, setMatchLoading]   = useState(false)
 
   const load = useCallback(async () => {
     // Auth + all four shelf queries in parallel
@@ -59,6 +63,15 @@ export default function UserProfilePage() {
     }
 
     setLoading(false)
+
+    // Taste match — computed on demand, only for other users. Runs after the
+    // page is interactive so the shelf isn't blocked on the match query.
+    if (uid && uid !== targetId) {
+      setMatchLoading(true)
+      const result = await getTasteMatch(targetId)
+      setMatch(result)
+      setMatchLoading(false)
+    }
   }, [targetId])
 
   useEffect(() => { load() }, [load])
@@ -168,9 +181,7 @@ export default function UserProfilePage() {
         {/* Match + follow control */}
         {showFollowControl && (
           <div className="flex items-center gap-3">
-            <span className="text-sm text-foreground/40 font-sans tabular-nums">
-              Match: —
-            </span>
+            <MatchLabel loading={matchLoading} match={match} />
             {following ? (
               <FollowingPill onUnfollow={handleUnfollow} pending={followPending} />
             ) : (
@@ -262,6 +273,35 @@ export default function UserProfilePage() {
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
+
+/**
+ * Taste-match label shown next to the follow control.
+ *   loading            → "Match …"
+ *   scored             → "Match 87%"
+ *   below threshold    → "Not enough overlap yet"
+ */
+function MatchLabel({
+  loading,
+  match,
+}: {
+  loading: boolean
+  match: TasteMatchResult | null
+}) {
+  let text: string
+  if (loading || match === null) {
+    text = "Match …"
+  } else if (match.score === null) {
+    text = "Not enough overlap yet"
+  } else {
+    text = `Match ${match.score}%`
+  }
+
+  return (
+    <span className="text-sm text-foreground/40 font-sans tabular-nums">
+      {text}
+    </span>
+  )
+}
 
 /**
  * Two-tap "Following" pill — same interaction model as the Friends tab.

@@ -5,6 +5,14 @@
 Most recent first. Each entry: date, decision, reasoning.
 
 ---
+## 2026-06-05
+**Taste-match uses rank position, not the frozen score.** Scores are midpoint-interpolated per shelf and aren't comparable across users — two people can rank identically and still have different scores. Rank position is the cross-user-comparable signal of agreement. (Would revisit only if scores ever became globally calibrated.) V1 also uses mutually-visible books only — private-informs-math deferred to V2 (needs server-side compute).
+
+**Taste-match normalizes over the shared set, not the full shelf.** Each user's rank is taken only among the books both have finished (re-ranked 1…n within that overlap), then normalized via (rank−1)/(n−1). Normalizing by full-shelf length would penalize pairs with very different shelf sizes even when they ordered shared books identically. Built as a pure function in /lib/taste-match.ts with the data fetch as a documented swap point — the V2 "private informs math" upgrade replaces only the fetch, not the algorithm.
+
+**Taste-match overlap threshold set to 4 shared books, not 3.** At n=3 the score can only be 33/67/100 — a three-state dial that can't distinguish "pretty aligned" from "somewhat aligned." At n=4 it spans 33/50/67/83/100 (five gradations), which is meaningfully less noisy for the cost of one more shared book. Chose 4 over 5 to keep the feature accessible at soft-launch scale, where shared finished books will be sparse early — gating the headline social feature too hard reads as broken, not honest. MIN_SHARED_BOOKS is a named constant; plan is to tune against real overlap distribution from user-research calls.
+
+---
 
 ## 2026-06-03
 

@@ -14,6 +14,8 @@ import {
   type FollowingUser,
   type SearchResult,
 } from "@/lib/follows"
+import { getTasteMatches } from "@/lib/taste-match-data"
+import type { TasteMatchResult } from "@/lib/taste-match"
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -29,6 +31,11 @@ export default function FriendsPage() {
   // Following list
   const [following, setFollowing]           = useState<FollowingUser[]>([])
   const [followingLoading, setFollowingLoading] = useState(true)
+
+  // Taste-match scores, keyed by followed user id. Computed on demand (no cache
+  // table in V1) and recomputed whenever the set of followed ids changes.
+  const [matches, setMatches]               = useState<Map<string, TasteMatchResult>>(new Map())
+  const [matchesLoading, setMatchesLoading] = useState(true)
 
   // Per-user optimistic lock — prevents double-taps
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set())
@@ -66,6 +73,30 @@ export default function FriendsPage() {
       setSearching(false)
     })
   }, [debouncedQuery, userId])
+
+  // ── Taste-match scores ──────────────────────────────────────────────────────
+  // Recompute whenever the set of followed ids changes (follow/unfollow). One
+  // batched query covers every friend — getTasteMatches never fans out per-user.
+  // Keyed on the sorted id string so reordering alone doesn't refetch.
+  const followingKey = following.map((u) => u.id).sort().join(",")
+
+  useEffect(() => {
+    if (!userId) return
+    const ids = followingKey ? followingKey.split(",") : []
+    if (ids.length === 0) {
+      setMatches(new Map())
+      setMatchesLoading(false)
+      return
+    }
+    let cancelled = false
+    setMatchesLoading(true)
+    getTasteMatches(ids).then((result) => {
+      if (cancelled) return
+      setMatches(result)
+      setMatchesLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [userId, followingKey])
 
   // ── Follow / Unfollow ─────────────────────────────────────────────────────
 
@@ -136,6 +167,19 @@ export default function FriendsPage() {
   const genuinelyEmpty     = isQuerying && !searching && searchResults.length === 0
   const allAlreadyFollowed = isQuerying && !searching && searchResults.length > 0 && newPeople.length === 0
   const showResults        = isQuerying && !searching && newPeople.length > 0
+
+  // Following list sorted by taste-match descending. Below-threshold rows (no
+  // score) sink to the bottom; among them the original newest-follow-first order
+  // is preserved (Array.sort is stable). While matches are still loading every
+  // score is null, so the list keeps its natural order until results arrive.
+  const sortedFollowing = [...following].sort((a, b) => {
+    const sa = matches.get(a.id)?.score ?? null
+    const sb = matches.get(b.id)?.score ?? null
+    if (sa === null && sb === null) return 0
+    if (sa === null) return 1
+    if (sb === null) return -1
+    return sb - sa
+  })
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -241,11 +285,13 @@ export default function FriendsPage() {
             </div>
           ) : (
             <ul className="mt-3 space-y-0.5">
-              {following.map((user) => (
+              {sortedFollowing.map((user) => (
                 <li key={user.id}>
                   <FollowingUserRow
                     user={user}
                     pending={pendingIds.has(user.id)}
+                    match={matches.get(user.id) ?? null}
+                    matchLoading={matchesLoading}
                     onUnfollow={() => handleUnfollow(user.id)}
                   />
                 </li>
@@ -342,10 +388,14 @@ function SearchUserRow({
 function FollowingUserRow({
   user,
   pending,
+  match,
+  matchLoading,
   onUnfollow,
 }: {
   user: FollowingUser
   pending: boolean
+  match: TasteMatchResult | null
+  matchLoading: boolean
   onUnfollow: () => void
 }) {
   const [confirming, setConfirming] = useState(false)
@@ -394,9 +444,22 @@ function FollowingUserRow({
 
       {/* Right side — match label + pill on one line */}
       <div className="flex items-center gap-2 shrink-0">
-        {/* Match score — "—" until Day 8 wires up taste-match */}
-        <span className="text-xs text-foreground/40 font-sans tabular-nums">
-          Match: —
+        {/* Taste-match: "Match 87%" when scored, "—" below threshold (full
+            "Not enough overlap yet" copy lives on the friend profile), "…" while
+            computing. */}
+        <span
+          className="text-xs text-foreground/40 font-sans tabular-nums"
+          title={
+            !matchLoading && match !== null && match.score === null
+              ? "Not enough overlap yet"
+              : undefined
+          }
+        >
+          {matchLoading || match === null
+            ? "…"
+            : match.score === null
+              ? "—"
+              : `Match ${match.score}%`}
         </span>
 
         {/* Two-tap unfollow pill */}

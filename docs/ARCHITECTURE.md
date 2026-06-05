@@ -2,7 +2,7 @@
 
 *Tech stack, data model, and key algorithms for Verso V1.*
 
-**Last updated:** 2026-05-12
+**Last updated:** 2026-06-05
 
 ---
 
@@ -144,11 +144,12 @@ was_started     boolean (default false)
 note            text (nullable, optional "what stayed with you")
 added_at        timestamp
 finished_at     timestamp (nullable)
+score           numeric (nullable; frozen at ranking time; null below 10-book threshold)
 ```
 
 Key behaviors:
 - Weekly picks excludes any book with ANY `user_books` row regardless of status (prevents DNF re-recommendation)
-- Taste-match uses ALL finished books regardless of visibility (private still informs the math)
+- V1 taste-match uses mutually visible finished books only (both users must have visibility='visible'). Private-informs-math is planned for V2 via server-side compute — see DECISION_LOG.
 
 ### `follows`
 One-way friend graph.
@@ -232,15 +233,17 @@ When user finishes a book and selects tier:
 3. Otherwise binary search: pick middle book, ask which they loved more. Narrow upper/lower half based on answer. Repeat until interval is empty (3-5 questions for ~30 books)
 4. Insert at resulting position. Increment `rank_position` for affected books
 5. Save each comparison to `comparisons`
+6. **Scoring:** if user has ≥ 10 finished books, assign a frozen numeric score — midpoint of the two neighboring scores within the tier band (loved 8–10, liked 5–7.9, fine 1–4.9). New top of tier = midpoint of current top and band ceiling; new bottom = midpoint of current bottom and band floor; empty tier = band midpoint. Score never changes unless the user explicitly re-ranks.
+7. **"Too tough to call":** ends comparisons immediately. New book takes the same score as the pivot and is placed directly below it in `rank_position`. No `comparisons` row written.
 
 ### Taste-match score
 
 For each pair (user_a, user_b):
-1. Find all finished books both users have (regardless of visibility): `shared_books`
+1. Find finished books where both users have `visibility='visible'`: `shared_books`
 2. If `count(shared_books) < 3`: "Not enough overlap yet"
-3. For each shared book, compute difference in normalized rank position (each user's rank normalized 0-1 by list length)
+3. For each user, re-rank only the shared books 1…n by their overall shelf ordering (loved → liked → fine, then `rank_position` ascending). Normalize each to [0,1] via `(rank − 1) / (n − 1)`. Compute absolute difference per shared book.
 4. Average differences. Similarity: `100 - (avg_diff * 100)`. Round.
-5. Computed on demand for V1
+5. Computed on demand for V1. Data fetch is the documented swap point for V2 private-informs-math upgrade — see DECISION_LOG.
 
 ### Weekly picks
 
