@@ -48,7 +48,7 @@ Goodreads serves committed long-time trackers. StoryGraph wins on analytics and 
 
 ## V1 scope
 
-Four tabs. No more.
+Five tabs.
 
 ### Tab 1 — Home
 
@@ -73,15 +73,24 @@ Search bar querying Open Library API. Results as cards. Tap → action menu (Rea
 
 ### Tab 4 — You (Profile)
 
-Top to bottom:
+The identity dashboard — highlights and entry points, not the full archive (that lives in the Shelf tab). Top to bottom:
 1. Avatar, name, edit button
 2. Taste signature one-liner (factual stats only)
-3. **Top 5 — horizontal scroll of covers** (hero artifact)
+3. **Top 5 — horizontal scroll of covers** (hero artifact), with "see all" → Shelf (Finished)
 4. Currently reading (1-3 cards)
-5. Want to read next (top 5 visible, "see all" expands)
+5. Want to read — preview strip, "see all" → Shelf (Want-to-read)
 6. **Milestones — small horizontal scroll of earned badges**
-7. Full ranked shelf (scrollable)
-8. **DNF list** (small tappable section at bottom)
+7. **DNF list** (own profile only, small tappable section at bottom)
+
+The full ranked shelf and full want-to-read list no longer live inline here — they moved to the Shelf tab to keep the profile short and milestones/DNF reachable. The "see all" links are the only path into a friend's full lists, so they appear on friend profiles too (minus DNF). Exact preview composition — e.g. whether Finished shows a separate recent-strip alongside Top 5 — to be settled in the mockup.
+
+### Tab 5 — Shelf
+
+The full browsable archive. One view, rendered for any user: your own via this tab, a friend's via "see all" on their profile. Two sub-views (tabs within the page):
+- **Finished** — the full ranked list, infinite scroll, in rank order (loved → liked → fine, then rank_position)
+- **Want to read** — full list, infinite scroll
+
+DNF is not shown here (own-profile-only, per the privacy model). Layout pending mockup.
 
 ---
 
@@ -100,7 +109,7 @@ Top to bottom:
 ### Pairwise ranking
 
 1. Mark book as finished
-2. Tier prompt: "How was it? Loved it / Liked it / It was fine"
+2. Tier prompt: "How was it? Loved it / Liked it / Wasn't for me"
 3. Pairwise comparisons within tier (3-5 matchups, binary search)
 4. Position revealed
 5. If cracks top 10 → optional "What stayed with you?" prompt

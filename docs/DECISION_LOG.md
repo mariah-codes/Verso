@@ -5,6 +5,15 @@
 Most recent first. Each entry: date, decision, reasoning.
 
 ---
+
+## 2026-06-06
+**Ranking tiers relabeled to include a genuine negative option.** Old tiers (Loved it / Liked it / It was fine) were all non-negative — no honest way to log a book you disliked. New labels: Loved it (8–10) / Liked it (5–7.9) / Wasn't for me (1–4.9). Bands and the stored enum are unchanged; only display copy changes. "Liked it" absorbs the old neutral "fine" range, and the bottom band — already 1–4.9 — finally has a label matching its purpose. Aligns with Beli's positive/neutral/negative split.
+
+
+**Ranked shelf + want-to-read move to a dedicated "Shelf" tab — overturning the 2026-04-28 "collapse into Profile" decision.** Split into an identity dashboard (You) and a full browsable archive, profile and shelf aren't redundant. The full shelf is one view parameterized by user (Finished, ranked + infinite scroll; Want-to-read). Every profile — own and friend — keeps compact preview strips (currently reading / want-to-read / finished) with "see all" → that user's shelf view; this is the only path to a friend's full lists, so the previews are required, not optional. The Shelf tab is a shortcut to your own shelf view. Five tabs now: Home, Friends, Search, Shelf, You — in line with Beli (Lists) and Spotify (Your Library). Detailed layout pending mockup.
+
+---
+
 ## 2026-06-05
 **Taste-match uses rank position, not the frozen score.** Scores are midpoint-interpolated per shelf and aren't comparable across users — two people can rank identically and still have different scores. Rank position is the cross-user-comparable signal of agreement. (Would revisit only if scores ever became globally calibrated.) V1 also uses mutually-visible books only — private-informs-math deferred to V2 (needs server-side compute).
 
