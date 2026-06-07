@@ -2,14 +2,14 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Users, Search, Library, User } from "lucide-react"
+import { Home, Users, Search, LibraryBig, User } from "lucide-react"
 
 const TABS = [
-  { href: "/home",    label: "Home",    Icon: Home    },
-  { href: "/friends", label: "Friends", Icon: Users   },
-  { href: "/search",  label: "Search",  Icon: Search  },
-  { href: "/shelf",   label: "Shelf",   Icon: Library },
-  { href: "/me",      label: "You",     Icon: User    },
+  { href: "/home",    label: "Home",    Icon: Home       },
+  { href: "/friends", label: "Friends", Icon: Users      },
+  { href: "/search",  label: "Search",  Icon: Search     },
+  { href: "/shelf",   label: "Shelf",   Icon: LibraryBig },
+  { href: "/me",      label: "You",     Icon: User       },
 ] as const
 
 export function TabBar() {
@@ -32,6 +32,7 @@ export function TabBar() {
             >
               <Icon
                 className="size-[22px]"
+                strokeWidth={1.75}
                 style={{ color: active ? "#9C4A2F" : "color-mix(in srgb, var(--foreground) 35%, transparent)" }}
               />
               <span

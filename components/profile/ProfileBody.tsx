@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Trophy, BookOpen, Bookmark, Award, ChevronDown } from "lucide-react"
+import { Trophy, BookOpen, Bookmark, Award, ChevronDown, ChevronRight } from "lucide-react"
 import { ShelfBookCard } from "@/components/book/ShelfBookCard"
 import type { ShelfBook } from "@/lib/profile"
 
@@ -48,8 +48,8 @@ export function ProfileBody({
       <section>
         <SectionHeader
           icon={<Trophy className="size-4" />}
-          title="Top 3"
-          seeAll={{ href: `${shelfBasePath}?view=finished`, count: finished.length }}
+          title="Finished — Top 3"
+          seeAll={{ href: `${shelfBasePath}?view=finished`, total: finished.length }}
         />
         {top3.length === 0 ? (
           <EmptyLine>No finished books yet.</EmptyLine>
@@ -84,7 +84,7 @@ export function ProfileBody({
         <SectionHeader
           icon={<Bookmark className="size-4" />}
           title="Want to read"
-          seeAll={{ href: `${shelfBasePath}?view=want`, count: wantToRead.length }}
+          seeAll={{ href: `${shelfBasePath}?view=want`, total: wantToRead.length }}
         />
         {wantPreview.length === 0 ? (
           <EmptyLine>No books on the reading list.</EmptyLine>
@@ -121,7 +121,9 @@ function SectionHeader({
 }: {
   icon: React.ReactNode
   title: string
-  seeAll?: { href: string; count: number }
+  /** When provided, renders a quiet "see all" link — hidden when total ≤ 3
+   *  (the preview already shows everything in that case). */
+  seeAll?: { href: string; total: number }
 }) {
   return (
     <div className="flex items-center gap-2 mb-4">
@@ -129,13 +131,13 @@ function SectionHeader({
       <h2 className="text-xs font-semibold tracking-widest uppercase text-foreground/60 font-sans">
         {title}
       </h2>
-      {seeAll && seeAll.count > 0 && (
+      {seeAll && seeAll.total > 3 && (
         <Link
           href={seeAll.href}
-          className="ml-auto text-xs font-medium tabular-nums hover:opacity-80 transition-opacity"
-          style={{ color: "#9C4A2F" }}
+          className="ml-auto flex items-center gap-0.5 text-xs text-foreground/50 hover:text-foreground/70 transition-colors"
         >
-          see all {seeAll.count} →
+          see all
+          <ChevronRight className="size-3" />
         </Link>
       )}
     </div>

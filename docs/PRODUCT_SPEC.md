@@ -76,7 +76,7 @@ Search bar querying Open Library API. Results as cards. Tap → action menu (Rea
 The identity dashboard — highlights and entry points, not the full archive (that lives in the Shelf tab). Top to bottom:
 1. Avatar, name, edit button
 2. Taste signature one-liner (factual stats only)
-3. **Top 5 — horizontal scroll of covers** (hero artifact), with "see all" → Shelf (Finished)
+3. **Finished — Top 3** — three cards, with "see all" → Shelf (Finished)
 4. Currently reading (1-3 cards)
 5. Want to read — preview strip, "see all" → Shelf (Want-to-read)
 6. **Milestones — small horizontal scroll of earned badges**

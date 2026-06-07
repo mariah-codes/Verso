@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ChevronLeft } from "lucide-react"
+import { ChevronLeft, LibraryBig } from "lucide-react"
 import {
   fetchFinishedOrdered,
   fetchShelf,
@@ -83,14 +83,17 @@ export function ShelfView({ userId, isOwn }: ShelfViewProps) {
   return (
     <div className="min-h-screen bg-background pb-8">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-20 bg-background/90 backdrop-blur-sm px-5 pt-4 pb-3">
+      <div className="sticky top-0 z-20 bg-background/90 backdrop-blur-sm px-5 pt-5 pb-0">
         {isOwn ? (
-          <h1
-            className="text-2xl text-foreground"
-            style={{ fontFamily: "var(--font-serif)" }}
-          >
-            Your shelf
-          </h1>
+          <div className="flex items-center gap-2">
+            <LibraryBig className="size-4 text-foreground/40 shrink-0" />
+            <h1
+              className="text-2xl text-foreground/80"
+              style={{ fontFamily: "var(--font-serif)" }}
+            >
+              Your shelf
+            </h1>
+          </div>
         ) : (
           <div className="flex items-center gap-2">
             <button
@@ -109,19 +112,27 @@ export function ShelfView({ userId, isOwn }: ShelfViewProps) {
           </div>
         )}
 
-        {/* Segmented control */}
-        <div className="mt-3 inline-flex rounded-xl bg-muted/60 p-0.5">
-          <SegButton active={view === "finished"} onClick={() => setView("finished")}>
+        {/* Text tabs with live counts */}
+        <div className="flex gap-6 mt-3 border-b border-border">
+          <TabButton
+            active={view === "finished"}
+            onClick={() => setView("finished")}
+            count={finished?.length ?? null}
+          >
             Finished
-          </SegButton>
-          <SegButton active={view === "want"} onClick={() => setView("want")}>
+          </TabButton>
+          <TabButton
+            active={view === "want"}
+            onClick={() => setView("want")}
+            count={wantToRead?.length ?? null}
+          >
             Want to read
-          </SegButton>
+          </TabButton>
         </div>
       </div>
 
       {/* ── Grid ───────────────────────────────────────────────────────────── */}
-      <div className="px-5 pt-2">
+      <div className="px-5 pt-5">
         {loading ? (
           <Grid>
             {Array.from({ length: 9 }).map((_, i) => <ShelfBookCardSkeleton key={i} />)}
@@ -150,30 +161,43 @@ export function ShelfView({ userId, isOwn }: ShelfViewProps) {
 // ── Sub-components ──────────────────────────────────────────────────────────
 
 function Grid({ children }: { children: React.ReactNode }) {
-  return <div className="grid grid-cols-3 gap-x-3 gap-y-6">{children}</div>
+  return <div className="grid grid-cols-3 gap-x-3 gap-y-4">{children}</div>
 }
 
-function SegButton({
+/**
+ * Underline text tab. Active: bold + terracotta bottom border.
+ * Inactive: muted, no underline. Count shown inline when data has loaded.
+ */
+function TabButton({
   active,
   onClick,
+  count,
   children,
 }: {
   active: boolean
   onClick: () => void
+  /** null while loading — omitted until data arrives. */
+  count: number | null
   children: React.ReactNode
 }) {
   return (
     <button
       onClick={onClick}
       aria-pressed={active}
-      className="rounded-[10px] px-4 py-1.5 text-xs font-medium transition-colors"
-      style={
+      className={[
+        "pb-2.5 text-sm transition-colors whitespace-nowrap",
         active
-          ? { backgroundColor: "#FAF8F4", color: "#9C4A2F", boxShadow: "0 1px 2px rgba(0,0,0,0.06)" }
-          : { color: "color-mix(in srgb, var(--foreground) 45%, transparent)" }
-      }
+          ? "font-semibold border-b-2 -mb-px"
+          : "font-normal text-foreground/45 border-b-2 border-transparent",
+      ].join(" ")}
+      style={active ? { color: "#9C4A2F", borderColor: "#9C4A2F" } : undefined}
     >
       {children}
+      {count !== null && (
+        <span className={`ml-1.5 tabular-nums ${active ? "opacity-70" : "opacity-60"}`}>
+          {count}
+        </span>
+      )}
     </button>
   )
 }

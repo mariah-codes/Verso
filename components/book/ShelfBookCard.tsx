@@ -54,22 +54,18 @@ export function ShelfBookCard({
 
       {/* Metadata */}
       <div className="space-y-0.5 px-0.5">
-        {/* Title: 2-line clamp so the same card works in previews and the grid */}
-        <p className="text-xs font-medium text-foreground leading-snug line-clamp-2">
-          {book.title}
-        </p>
-        {/* Author + score share a row: author truncates, score stays put.
-            Score is non-null only for finished books past the 10-book display
-            threshold (frozen scores seed at the crossing), so this is the
-            existing threshold gate — no number ever shows below it. */}
+        {/* Title + score on one row: title truncates, score stays put */}
         <div className="flex items-baseline justify-between gap-1.5">
-          <p className="text-[10px] text-foreground/55 line-clamp-1 min-w-0">
-            {book.author}
+          <p className="text-xs font-medium text-foreground leading-snug truncate min-w-0">
+            {book.title}
           </p>
           {book.score !== null && (
             <ScoreDisplay score={book.score} className="text-sm shrink-0" />
           )}
         </div>
+        <p className="text-[10px] text-foreground/55 line-clamp-1">
+          {book.author}
+        </p>
       </div>
     </Link>
   )
