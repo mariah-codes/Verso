@@ -10,6 +10,7 @@ import {
   followUser,
   unfollowUser,
   getFollowing,
+  getReadingTitle,
   searchUsers,
   type FollowingUser,
   type SearchResult,
@@ -124,6 +125,15 @@ export default function FriendsPage() {
         prev.map((u) => (u.id === target.id ? { ...u, isFollowing: false } : u)),
       )
       setFollowing((prev) => prev.filter((u) => u.id !== target.id))
+    } else {
+      // Backfill the currently-reading title we couldn't know at optimistic-insert
+      // time. Row is already visible; this just fills in the book line beneath the
+      // name without a full reload or any visible flicker.
+      getReadingTitle(target.id).then((title) => {
+        setFollowing((prev) =>
+          prev.map((u) => (u.id === target.id ? { ...u, currentlyReading: title } : u)),
+        )
+      })
     }
 
     setPendingIds((s) => { const n = new Set(s); n.delete(target.id); return n })

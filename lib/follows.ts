@@ -122,6 +122,25 @@ export async function getFollowing(userId: string): Promise<FollowingUser[]> {
 }
 
 /**
+ * Returns the currently-reading title for one user (first visible book), or
+ * null if they have nothing active. Used to backfill a freshly-followed row
+ * after the optimistic prepend — kept separate so getFollowing stays batched.
+ */
+export async function getReadingTitle(userId: string): Promise<string | null> {
+  const { data } = await db
+    .from("user_books")
+    .select("books(title)")
+    .eq("user_id", userId)
+    .eq("status", "reading")
+    .eq("visibility", "visible")
+    .limit(1)
+    .maybeSingle()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data as any)?.books?.title ?? null
+}
+
+/**
  * Returns the profiles of everyone who follows the user, newest-first.
  */
 export async function getFollowers(userId: string): Promise<UserSummary[]> {
