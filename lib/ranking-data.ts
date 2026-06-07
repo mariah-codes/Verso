@@ -4,6 +4,7 @@ import { supabase } from "./supabase"
 import {
   seedScores,
   insertAtPosition,
+  compareFinishedOrder,
   SCORE_DISPLAY_THRESHOLD,
   type Tier,
   type RankedBook,
@@ -104,15 +105,13 @@ export async function fetchOverallRank(
 
   if (error || !data) return null
 
-  const TIER_ORDER: Record<string, number> = { loved: 0, liked: 1, fine: 2 }
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sorted = (data as any[]).sort((a, b) => {
-    const ta = TIER_ORDER[a.tier] ?? 99
-    const tb = TIER_ORDER[b.tier] ?? 99
-    if (ta !== tb) return ta - tb
-    return (a.rank_position ?? 0) - (b.rank_position ?? 0)
-  })
+  const sorted = (data as any[]).sort((a, b) =>
+    compareFinishedOrder(
+      { tier: a.tier, rankPosition: a.rank_position },
+      { tier: b.tier, rankPosition: b.rank_position },
+    ),
+  )
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const idx = sorted.findIndex((row: any) => row.books?.id === bookId)

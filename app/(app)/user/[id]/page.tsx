@@ -3,13 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { useParams, useRouter } from "next/navigation"
-import { BookMarked, BookOpen, ChevronLeft, Trophy } from "lucide-react"
+import { ChevronLeft } from "lucide-react"
 import { supabase } from "@/lib/supabase"
-import { fetchProfile, fetchShelf, type UserProfile, type ShelfBook } from "@/lib/profile"
+import { fetchAllShelves, type UserProfile, type ShelfBook } from "@/lib/profile"
 import { followUser, isFollowing, unfollowUser } from "@/lib/follows"
 import { getTasteMatch } from "@/lib/taste-match-data"
 import type { TasteMatchResult } from "@/lib/taste-match"
-import { ShelfBookCard, ShelfBookCardSkeleton } from "@/components/book/ShelfBookCard"
+import { ProfileBody } from "@/components/profile/ProfileBody"
+import { ShelfBookCardSkeleton } from "@/components/book/ShelfBookCard"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -36,25 +37,26 @@ export default function UserProfilePage() {
   const [matchLoading, setMatchLoading]   = useState(false)
 
   const load = useCallback(async () => {
-    // Auth + all four shelf queries in parallel
-    const [authResult, profile, reading, wantToRead, finished] = await Promise.all([
+    const [authResult, shelves] = await Promise.all([
       supabase.auth.getUser(),
-      fetchProfile(targetId),
-      fetchShelf(targetId, "reading", 3),
-      fetchShelf(targetId, "want_to_read", 5),
-      fetchShelf(targetId, "finished"),
+      fetchAllShelves(targetId),
     ])
 
     const uid = authResult.data.user?.id ?? null
     setCurrentUserId(uid)
 
-    if (!profile) {
+    if (!shelves.profile) {
       setNotFound(true)
       setLoading(false)
       return
     }
 
-    setData({ profile, reading, wantToRead, finished })
+    setData({
+      profile: shelves.profile,
+      reading: shelves.reading,
+      wantToRead: shelves.wantToRead,
+      finished: shelves.finished,
+    })
 
     // Follow status — needs uid, runs after the main batch
     if (uid && uid !== targetId) {
@@ -202,71 +204,16 @@ export default function UserProfilePage() {
         )}
       </div>
 
-      {/* ── Shelf sections ────────────────────────────────────────────────── */}
-      <div className="space-y-8 px-5 pb-8">
-
-        <Section
-          icon={<BookOpen className="size-4" />}
-          title="Currently reading"
-          count={reading.length}
-        >
-          {reading.length === 0 ? (
-            <EmptyState>Nothing on the nightstand right now.</EmptyState>
-          ) : (
-            <HorizontalScroll>
-              {reading.map((book) => (
-                <ShelfBookCard
-                  key={book.userBookId}
-                  book={book}
-                  className="w-[110px]"
-                  sizes="110px"
-                />
-              ))}
-            </HorizontalScroll>
-          )}
-        </Section>
-
-        <Section
-          icon={<BookMarked className="size-4" />}
-          title="Want to read"
-          count={wantToRead.length}
-        >
-          {wantToRead.length === 0 ? (
-            <EmptyState>No books on the reading list.</EmptyState>
-          ) : (
-            <HorizontalScroll>
-              {wantToRead.map((book) => (
-                <ShelfBookCard
-                  key={book.userBookId}
-                  book={book}
-                  className="w-[110px]"
-                  sizes="110px"
-                />
-              ))}
-            </HorizontalScroll>
-          )}
-        </Section>
-
-        <Section
-          icon={<Trophy className="size-4" />}
-          title="Finished"
-          count={finished.length}
-        >
-          {finished.length === 0 ? (
-            <EmptyState>No finished books yet.</EmptyState>
-          ) : (
-            <div className="grid grid-cols-3 gap-x-3 gap-y-6">
-              {finished.map((book) => (
-                <ShelfBookCard
-                  key={book.userBookId}
-                  book={book}
-                  sizes="(max-width: 640px) 30vw, 130px"
-                />
-              ))}
-            </div>
-          )}
-        </Section>
-
+      {/* ── Sections (shared with own profile; no DNF, no edit) ───────────── */}
+      <div className="pb-8">
+        <ProfileBody
+          reading={reading}
+          wantToRead={wantToRead}
+          finished={finished}
+          dnf={[]}
+          shelfBasePath={`/user/${targetId}/shelf`}
+          isOwn={false}
+        />
       </div>
     </div>
   )
@@ -350,52 +297,6 @@ function FollowingPill({ onUnfollow, pending }: { onUnfollow: () => void; pendin
   )
 }
 
-function Section({
-  icon,
-  title,
-  count,
-  children,
-}: {
-  icon: React.ReactNode
-  title: string
-  count?: number
-  children: React.ReactNode
-}) {
-  return (
-    <section>
-      <div className="flex items-center gap-2 mb-4">
-        <span className="text-foreground/40">{icon}</span>
-        <h2 className="text-xs font-semibold tracking-widest uppercase text-foreground/60 font-sans">
-          {title}
-        </h2>
-        {count !== undefined && count > 0 && (
-          <span className="ml-auto text-xs text-foreground/35 font-sans tabular-nums">
-            {count}
-          </span>
-        )}
-      </div>
-      {children}
-    </section>
-  )
-}
-
-function HorizontalScroll({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      className="flex gap-3 overflow-x-auto -mx-5 px-5 pb-1"
-      style={{ scrollbarWidth: "none" }}
-    >
-      {children}
-    </div>
-  )
-}
-
-function EmptyState({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-sm text-foreground/40 leading-relaxed py-2">{children}</p>
-  )
-}
-
 function SmallSpinner() {
   return (
     <svg className="size-3.5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
@@ -421,12 +322,12 @@ function PageSkeleton({ onBack }: { onBack: () => void }) {
         <div className="h-7 w-36 rounded-full bg-muted animate-pulse" />
       </div>
       <div className="space-y-8 px-5">
-        {["Currently reading", "Want to read", "Finished"].map((label) => (
+        {["Top 3", "Currently reading", "Want to read"].map((label) => (
           <div key={label}>
             <div className="h-3 w-28 rounded bg-muted animate-pulse mb-4" />
-            <div className="flex gap-3">
+            <div className="grid grid-cols-3 gap-x-3 gap-y-6">
               {[1, 2, 3].map((i) => (
-                <ShelfBookCardSkeleton key={i} className="w-[110px]" />
+                <ShelfBookCardSkeleton key={i} />
               ))}
             </div>
           </div>

@@ -26,6 +26,29 @@ export const TIER_LABELS: Record<Tier, string> = {
   fine:  "Wasn't for me",
 }
 
+// ── Overall ordering ──────────────────────────────────────────────────────────
+// Tier precedence for the combined finished list. Lower = better/higher up.
+export const TIER_ORDER: Record<Tier, number> = { loved: 0, liked: 1, fine: 2 }
+
+/**
+ * Canonical comparator for a user's combined finished list:
+ *   loved → liked → fine, then rank_position ascending (1 = best in tier).
+ * Unranked rows (null rank_position) sort to the bottom of their tier.
+ *
+ * Single source of truth for "overall order" — used by the shelf, the Top 3
+ * preview, and overall-rank lookups. Tolerates loose `string | null` tiers so
+ * callers holding ShelfBook/DB rows can pass straight through.
+ */
+export function compareFinishedOrder(
+  a: { tier: Tier | string | null; rankPosition: number | null },
+  b: { tier: Tier | string | null; rankPosition: number | null },
+): number {
+  const ta = TIER_ORDER[a.tier as Tier] ?? 99
+  const tb = TIER_ORDER[b.tier as Tier] ?? 99
+  if (ta !== tb) return ta - tb
+  return (a.rankPosition ?? Number.MAX_SAFE_INTEGER) - (b.rankPosition ?? Number.MAX_SAFE_INTEGER)
+}
+
 /** A finished book already ranked in a tier. */
 export interface RankedBook {
   bookId: string

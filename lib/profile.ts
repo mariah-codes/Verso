@@ -1,5 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 import { supabase } from "./supabase"
+import { compareFinishedOrder } from "./ranking"
 
 // Database types will be fully typed after running:
 //   npx supabase gen types typescript --project-id <id> > lib/database.types.ts
@@ -130,8 +131,34 @@ export async function fetchShelf(
 }
 
 /**
- * Fetches all four shelves in parallel. Use this on the /me page so we make
- * one round-trip worth of concurrent queries rather than four sequential ones.
+ * The user's full finished list in canonical overall order
+ * (loved → liked → fine, then rank_position asc). Use this anywhere "overall
+ * rank order" matters — the Shelf grid and the profile Top 3 preview.
+ *
+ * NOTE: deliberately NOT fetchShelf("finished"), which sorts by score desc and
+ * silently reverses tier order below the 10-book threshold (all scores null).
+ * compareFinishedOrder is correct in both the scored and pre-threshold cases.
+ */
+export async function fetchFinishedOrdered(userId: string): Promise<ShelfBook[]> {
+  const { data, error } = await db
+    .from("user_books")
+    .select(SHELF_SELECT)
+    .eq("user_id", userId)
+    .eq("status", "finished")
+
+  if (error) {
+    console.error("[profile] fetchFinishedOrdered:", error.message)
+    return []
+  }
+
+  return (data ?? []).map(rowToShelfBook).sort(compareFinishedOrder)
+}
+
+/**
+ * Fetches every shelf in parallel. Use this on the profile pages (own + friend)
+ * so we make one round-trip worth of concurrent queries rather than sequential
+ * ones. `finished` comes back in canonical overall order; `wantToRead` newest-
+ * first (full list so callers can show both a preview and a total count).
  */
 export async function fetchAllShelves(userId: string): Promise<{
   profile: UserProfile | null
@@ -143,8 +170,8 @@ export async function fetchAllShelves(userId: string): Promise<{
   const [profile, reading, wantToRead, finished, dnf] = await Promise.all([
     fetchProfile(userId),
     fetchShelf(userId, "reading", 3),
-    fetchShelf(userId, "want_to_read", 5),
-    fetchShelf(userId, "finished"),
+    fetchShelf(userId, "want_to_read"),
+    fetchFinishedOrdered(userId),
     fetchShelf(userId, "dnf"),
   ])
 
