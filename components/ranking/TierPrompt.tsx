@@ -9,9 +9,9 @@ interface TierPromptProps {
 }
 
 const TIERS: { tier: Tier; sublabel: string; emoji: string }[] = [
-  { tier: "loved",  sublabel: "One of my favourites",  emoji: "❤️" },
-  { tier: "liked",  sublabel: "Solid, enjoyed it",      emoji: "👍" },
-  { tier: "fine",   sublabel: "Just wasn't my thing",   emoji: "🫤" },
+  { tier: "loved",  sublabel: "Couldn't put it down",  emoji: "❤️" },
+  { tier: "liked",  sublabel: "A solid read",             emoji: "👍" },
+  { tier: "fine",   sublabel: "Just didn't land",            emoji: "🫤" },
 ]
 
 export function TierPrompt({ bookTitle, coverUrl, onSelect }: TierPromptProps) {
