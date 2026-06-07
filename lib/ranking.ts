@@ -16,6 +16,16 @@ export const TIER_BANDS = {
 
 export type Tier = "loved" | "liked" | "fine"
 
+// ── Tier labels (single source of truth — import wherever a tier is displayed) ─
+// The enum values ('loved' | 'liked' | 'fine') are stored in the DB and must
+// NEVER change. Only the display strings below are user-facing.
+
+export const TIER_LABELS: Record<Tier, string> = {
+  loved: "Loved it",
+  liked: "Liked it",
+  fine:  "Wasn't for me",
+}
+
 /** A finished book already ranked in a tier. */
 export interface RankedBook {
   bookId: string

@@ -1,6 +1,6 @@
 import Image from "next/image"
 import { BookOpen } from "lucide-react"
-import type { Tier } from "@/lib/ranking"
+import { TIER_LABELS, type Tier } from "@/lib/ranking"
 
 interface TierPromptProps {
   bookTitle: string
@@ -8,10 +8,10 @@ interface TierPromptProps {
   onSelect: (tier: Tier) => void
 }
 
-const TIERS: { tier: Tier; label: string; sublabel: string; emoji: string }[] = [
-  { tier: "loved",  label: "Loved it",     sublabel: "One of my favourites",   emoji: "❤️" },
-  { tier: "liked",  label: "Liked it",     sublabel: "Solid, enjoyed it",       emoji: "👍" },
-  { tier: "fine",   label: "It was fine",  sublabel: "Glad I read it, but…",    emoji: "🫤" },
+const TIERS: { tier: Tier; sublabel: string; emoji: string }[] = [
+  { tier: "loved",  sublabel: "One of my favourites",  emoji: "❤️" },
+  { tier: "liked",  sublabel: "Solid, enjoyed it",      emoji: "👍" },
+  { tier: "fine",   sublabel: "Just wasn't my thing",   emoji: "🫤" },
 ]
 
 export function TierPrompt({ bookTitle, coverUrl, onSelect }: TierPromptProps) {
@@ -43,7 +43,7 @@ export function TierPrompt({ bookTitle, coverUrl, onSelect }: TierPromptProps) {
 
       {/* Tier buttons */}
       <div className="flex flex-col gap-3 w-full">
-        {TIERS.map(({ tier, label, sublabel, emoji }) => (
+        {TIERS.map(({ tier, sublabel, emoji }) => (
           <button
             key={tier}
             onClick={() => onSelect(tier)}
@@ -51,7 +51,7 @@ export function TierPrompt({ bookTitle, coverUrl, onSelect }: TierPromptProps) {
           >
             <span className="text-2xl">{emoji}</span>
             <span className="flex flex-col">
-              <span className="text-sm font-semibold text-foreground">{label}</span>
+              <span className="text-sm font-semibold text-foreground">{TIER_LABELS[tier]}</span>
               <span className="text-xs text-foreground/50">{sublabel}</span>
             </span>
           </button>

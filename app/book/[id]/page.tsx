@@ -15,6 +15,7 @@ import {
   restoreRanking,
   markAsFinished,
 } from "@/lib/books"
+import { TIER_LABELS } from "@/lib/ranking"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -41,12 +42,6 @@ const SHELF_OPTIONS: { status: BookStatus; label: string }[] = [
   { status: "reading",      label: "Reading"       },
   { status: "finished",     label: "Finished"      },
 ]
-
-const TIER_LABELS: Record<string, string> = {
-  loved: "Loved it",
-  liked: "Liked it",
-  fine:  "It was fine",
-}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any
@@ -347,7 +342,7 @@ export default function BookPage() {
               <div className="flex items-center gap-3">
                 {userBook.tier && (
                   <span className="text-sm text-foreground/55">
-                    {TIER_LABELS[userBook.tier] ?? userBook.tier}
+                    {TIER_LABELS[userBook.tier as keyof typeof TIER_LABELS] ?? userBook.tier}
                   </span>
                 )}
                 {/* Re-rank button — right next to tier */}

@@ -90,6 +90,15 @@ export function RankingResult({
           {showScore && (
             <ScoreDisplay score={score!} className="text-3xl" />
           )}
+          {/* Position line — uses overall rank so no tier label is needed mid-
+              sentence. "#5 of 14 books" reads naturally for every tier, including
+              "Wasn't for me". Shown whenever the rank is known, below threshold
+              or above. */}
+          {overallRank !== null && (
+            <p className="text-xs text-foreground/40 font-sans tabular-nums">
+              #{overallRank} of {finishedCount} books
+            </p>
+          )}
         </div>
       </div>
 
