@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Image from "next/image"
-import { ChevronLeft, CheckCheck, BookOpen, Bookmark } from "lucide-react"
+import { ChevronLeft, CheckCheck, BookOpen, Bookmark, BookX, CircleX } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { RankingFlow, type NewBookInfo } from "@/components/ranking/RankingFlow"
 import { ScoreDisplay } from "@/components/shared/ScoreDisplay"
@@ -18,6 +18,8 @@ import {
 } from "@/lib/books"
 import { TIER_LABELS } from "@/lib/ranking"
 import { GenrePicker } from "@/components/book/GenrePicker"
+import { StopReadingSheet } from "@/components/book/StopReadingSheet"
+import { Toast, useToast } from "@/components/shared/Toast"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -46,12 +48,21 @@ const SHELF_OPTIONS: { status: BookStatus; label: string; Icon: React.ElementTyp
   { status: "finished",     label: "Finished",           Icon: CheckCheck },
 ] // order matches BookActionMenu: Want to read → Currently reading → Finished
 
+// The status switcher (for books already on the shelf) offers DNF as a direct
+// state, beneath the three main statuses. DNF is intentionally absent from
+// SHELF_OPTIONS so it never appears in the "Add to shelf" list for a book that
+// isn't on the shelf yet (nor in the Search/Add menu).
+const STATUS_DROPDOWN_OPTIONS: { status: BookStatus; label: string; Icon: React.ElementType }[] = [
+  ...SHELF_OPTIONS,
+  { status: "dnf", label: "Did not finish", Icon: BookX },
+]
+
 /** Quick lookup — icon for the closed trigger button. */
 const STATUS_ICON: Record<BookStatus, React.ElementType> = {
   want_to_read: Bookmark,
   reading:      BookOpen,
   finished:     CheckCheck,
-  dnf:          BookOpen, // DNF not reachable via this dropdown; fallback only
+  dnf:          BookX, // crossed-book = the one DNF glyph, used everywhere DNF appears
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -85,6 +96,13 @@ export default function BookPage() {
   // Remove confirm
   const [confirmRemove, setConfirmRemove] = useState(false)
   const [removing, setRemoving]           = useState(false)
+
+  // Stop reading → "Save for later or DNF?" prompt
+  const [stopOpen, setStopOpen] = useState(false)
+  const [stopping, setStopping] = useState(false)
+
+  // Toast
+  const [toast, showToast, dismissToast] = useToast()
 
   // Genre edit
   const [genreEditing, setGenreEditing] = useState(false)
@@ -162,11 +180,20 @@ export default function BookPage() {
         coverUrl:   book!.coverUrl,
       })
     } else {
-      await changeBookStatus(
+      // Any non-finished target — including DNF — writes through changeBookStatus,
+      // so the dropdown's DNF lands in the exact same row state as the stop-reading
+      // sheet (status='dnf'; tier/rank/score/finished_at cleared and the rank gap
+      // closed when leaving 'finished'). It never opens the ranking flow.
+      const { error } = await changeBookStatus(
         userBook.userBookId, newStatus, userBook.status,
         userId, userBook.tier, userBook.rankPosition,
       )
       await refresh(userId)
+      if (error) {
+        showToast({ variant: "error", message: "Couldn’t update — try again" })
+      } else if (newStatus === "dnf") {
+        showToast({ variant: "dnf", bookTitle: book?.title })
+      }
     }
 
     setChangingStatus(false)
@@ -308,6 +335,34 @@ export default function BookPage() {
       userBook.userBookId, userId, userBook.tier, userBook.rankPosition,
     )
     router.back()
+  }
+
+  /**
+   * Stop reading a currently-reading book — the two outcomes of the prompt:
+   *  - "want_to_read" (save for later): back on the reading list with was_started
+   *    set, so it reads as a book you've already cracked open.
+   *  - "dnf": moves to the private DNF list (own profile only, excluded from recs).
+   * Both reuse changeBookStatus; a reading book carries no tier/rank to unwind.
+   */
+  async function handleStopReading(target: "want_to_read" | "dnf") {
+    if (!userBook || !userId || !book || stopping) return
+    setStopping(true)
+    const { error } = await changeBookStatus(
+      userBook.userBookId, target, userBook.status,
+      userId, userBook.tier, userBook.rankPosition,
+    )
+    if (error) {
+      showToast({ variant: "error", message: "Couldn’t update — try again" })
+    } else {
+      await refresh(userId)
+      showToast(
+        target === "dnf"
+          ? { variant: "dnf",    bookTitle: book.title }
+          : { variant: "status", status: "want_to_read", bookTitle: book.title },
+      )
+    }
+    setStopOpen(false)
+    setStopping(false)
   }
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -457,7 +512,7 @@ export default function BookPage() {
                 {/* Inline options — slide open */}
                 {statusOpen && (
                   <div className="rounded-xl border border-border overflow-hidden">
-                    {SHELF_OPTIONS.map(({ status, label, Icon }) => {
+                    {STATUS_DROPDOWN_OPTIONS.map(({ status, label, Icon }) => {
                       const active = status === userBook.status
                       return (
                         <button
@@ -506,6 +561,21 @@ export default function BookPage() {
               )
             )}
           </div>
+
+          {/* ── Stop reading — quiet secondary affordance under the status ──────
+              control. Opens the bottom sheet; deliberately recedes so the
+              status dropdown stays the primary action. */}
+          {userBook?.status === "reading" && (
+            <div className="w-full max-w-xs -mt-1 flex justify-center">
+              <button
+                onClick={() => setStopOpen(true)}
+                className="inline-flex items-center gap-1.5 text-xs text-foreground/60 hover:text-foreground/80 underline underline-offset-4 transition-colors"
+              >
+                <CircleX className="size-3.5 shrink-0" strokeWidth={1.75} />
+                Stop reading
+              </button>
+            </div>
+          )}
 
           {/* ── Remove from shelf ───────────────────────────────────────────── */}
           {userBook && (
@@ -561,6 +631,18 @@ export default function BookPage() {
           }}
         />
       )}
+
+      {/* ── Stop reading sheet ────────────────────────────────────────────────── */}
+      <StopReadingSheet
+        open={stopOpen}
+        onOpenChange={setStopOpen}
+        onSaveForLater={() => handleStopReading("want_to_read")}
+        onDnf={() => handleStopReading("dnf")}
+        pending={stopping}
+      />
+
+      {/* ── Toast ─────────────────────────────────────────────────────────────── */}
+      <Toast payload={toast} onDismiss={dismissToast} />
     </>
   )
 }

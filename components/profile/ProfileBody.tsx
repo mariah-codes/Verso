@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Trophy, BookOpen, Bookmark, Award, ChevronDown, ChevronRight } from "lucide-react"
+import { Trophy, BookOpen, Bookmark, BookX, Award, ChevronDown, ChevronRight } from "lucide-react"
 import { ShelfBookCard } from "@/components/book/ShelfBookCard"
 import type { ShelfBook } from "@/lib/profile"
 
@@ -106,8 +106,9 @@ export function ProfileBody({
         </div>
       </section>
 
-      {/* ── DNF (own profile only) ─────────────────────────────────────────── */}
-      {isOwn && dnf.length > 0 && <DnfRow dnf={dnf} />}
+      {/* ── DNF (own profile only) — header always shows so a new reader sees
+          the shelf exists; the list/chevron appear once there's ≥1 book. ───── */}
+      {isOwn && <DnfRow dnf={dnf} />}
     </div>
   )
 }
@@ -154,28 +155,58 @@ function EmptyLine({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Own-only DNF row at the very bottom. Tapping expands the list in place — DNF
- * deliberately never appears in the Shelf, for anyone. Charcoal/muted, no icon.
+ * Own-only "DNF" section. Same header treatment as Milestones / Want
+ * to read (icon + uppercase label), with the count + privacy note as a subtitle
+ * beneath. Collapsed by default; tapping the header expands the list in place.
+ *
+ * The header (icon + "DNF") + subtitle ALWAYS render, even with zero books, so a
+ * new reader sees the shelf exists. When empty: subtitle reads "No books yet",
+ * the chevron is hidden, and the header isn't interactive (nothing to reveal).
+ * DNF deliberately never appears in the Shelf, for anyone. "DNF without shame":
+ * neutral charcoal/muted, no error styling.
  */
 function DnfRow({ dnf }: { dnf: ShelfBook[] }) {
   const [open, setOpen] = useState(false)
+  const hasBooks = dnf.length > 0
+
+  const header = (
+    <>
+      <div className="flex items-center gap-2">
+        <span className="text-foreground/40">
+          <BookX className="size-4" />
+        </span>
+        <h2 className="text-xs font-semibold tracking-widest uppercase text-foreground/60 font-sans">
+          DNF
+        </h2>
+        {hasBooks && (
+          <ChevronDown
+            className={`ml-auto size-4 text-foreground/30 transition-transform ${open ? "rotate-180" : ""}`}
+          />
+        )}
+      </div>
+      <p className="mt-1 text-xs text-foreground/40 font-sans tabular-nums group-hover:text-foreground/55 transition-colors">
+        {hasBooks
+          ? `${dnf.length} book${dnf.length !== 1 ? "s" : ""} · only you can see these`
+          : "No books yet"}
+      </p>
+    </>
+  )
 
   return (
     <section className="pt-2">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        className="flex items-center gap-2 w-full text-left py-2 group"
-      >
-        <span className="text-xs text-foreground/40 font-sans tabular-nums group-hover:text-foreground/60 transition-colors">
-          {dnf.length} book{dnf.length !== 1 ? "s" : ""} · only you can see these
-        </span>
-        <ChevronDown
-          className={`ml-auto size-4 text-foreground/30 transition-transform ${open ? "rotate-180" : ""}`}
-        />
-      </button>
-      {open && (
-        <div className="mt-3">
+      {hasBooks ? (
+        <button
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          className="w-full text-left group"
+        >
+          {header}
+        </button>
+      ) : (
+        <div className="w-full">{header}</div>
+      )}
+      {hasBooks && open && (
+        <div className="mt-4">
           <PreviewGrid>
             {dnf.map((book) => (
               <ShelfBookCard key={book.userBookId} book={book} sizes={CARD_SIZES} />

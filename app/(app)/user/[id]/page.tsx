@@ -5,7 +5,7 @@ import Image from "next/image"
 import { useParams, useRouter } from "next/navigation"
 import { ChevronLeft } from "lucide-react"
 import { supabase } from "@/lib/supabase"
-import { fetchAllShelves, type UserProfile, type ShelfBook } from "@/lib/profile"
+import { fetchFriendShelves, type UserProfile, type ShelfBook } from "@/lib/profile"
 import { followUser, isFollowing, unfollowUser } from "@/lib/follows"
 import { getTasteMatch } from "@/lib/taste-match-data"
 import type { TasteMatchResult } from "@/lib/taste-match"
@@ -39,7 +39,7 @@ export default function UserProfilePage() {
   const load = useCallback(async () => {
     const [authResult, shelves] = await Promise.all([
       supabase.auth.getUser(),
-      fetchAllShelves(targetId),
+      fetchFriendShelves(targetId),   // never fetches DNF — owner-only
     ])
 
     const uid = authResult.data.user?.id ?? null

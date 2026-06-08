@@ -177,3 +177,26 @@ export async function fetchAllShelves(userId: string): Promise<{
 
   return { profile, reading, wantToRead, finished, dnf }
 }
+
+/**
+ * Friend-facing shelves — identical to fetchAllShelves but DELIBERATELY omits
+ * DNF. DNF is owner-only (private, per the privacy model): a friend must never
+ * trigger a `status='dnf'` query, since RLS would otherwise return those rows
+ * (they're visibility='visible'). Use this for any profile that isn't the
+ * signed-in user's own; use fetchAllShelves only for /me.
+ */
+export async function fetchFriendShelves(userId: string): Promise<{
+  profile: UserProfile | null
+  reading: ShelfBook[]
+  wantToRead: ShelfBook[]
+  finished: ShelfBook[]
+}> {
+  const [profile, reading, wantToRead, finished] = await Promise.all([
+    fetchProfile(userId),
+    fetchShelf(userId, "reading", 3),
+    fetchShelf(userId, "want_to_read"),
+    fetchFinishedOrdered(userId),
+  ])
+
+  return { profile, reading, wantToRead, finished }
+}

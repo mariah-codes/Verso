@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import {
   Bookmark,
   BookOpen,
+  BookX,
   Check,
   Trash2,
   AlertCircle,
@@ -13,13 +14,13 @@ import type { BookStatus } from "@/lib/books"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type ToastVariant = "status" | "removed" | "error"
+export type ToastVariant = "status" | "removed" | "dnf" | "error"
 
 export interface ToastPayload {
   variant: ToastVariant
   /** For "status" toasts: the BookStatus that was applied. */
   status?: BookStatus
-  /** Book title — shown on the second line for status/removed toasts. */
+  /** Book title — shown on the second line for status/removed/dnf toasts. */
   bookTitle?: string
   /** For "error" toasts: the message to display. */
   message?: string
@@ -34,7 +35,7 @@ const STATUS_CONFIG: Record<
   want_to_read: { Icon: Bookmark,  label: "Saved to Want to read"       },
   reading:      { Icon: BookOpen,  label: "Moved to Currently reading"  },
   finished:     { Icon: Check,     label: "Marked as Finished"          },
-  dnf:          { Icon: BookOpen,  label: "Moved to Did not finish"     },
+  dnf:          { Icon: BookX,     label: "Moved to Did not finish"     },
 }
 
 const TERRACOTTA = "#D9744A"
@@ -92,6 +93,11 @@ export function Toast({ payload, onDismiss }: ToastProps) {
   } else if (payload.variant === "removed") {
     Icon      = Trash2
     label     = "Removed from shelf"
+    iconColor = TERRACOTTA
+    bookTitle = payload.bookTitle
+  } else if (payload.variant === "dnf") {
+    Icon      = BookX
+    label     = "Did not finish"
     iconColor = TERRACOTTA
     bookTitle = payload.bookTitle
   } else {
