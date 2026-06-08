@@ -135,7 +135,7 @@ export default function MePage() {
             <button
               onClick={() => handleMarkFinished(book)}
               disabled={markingId === book.userBookId}
-              className="text-sm font-medium underline underline-offset-2 px-0.5 text-left disabled:opacity-40 transition-opacity"
+              className="text-xs font-medium underline underline-offset-2 px-0.5 text-left disabled:opacity-40 transition-opacity"
               style={{ color: "#9C4A2F" }}
             >
               {markingId === book.userBookId ? "Saving…" : "Mark finished"}

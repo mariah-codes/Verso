@@ -59,7 +59,7 @@ export function ShelfBookCard({
           <p className="text-xs font-medium text-foreground leading-snug truncate min-w-0">
             {book.title}
           </p>
-          {book.score !== null && (
+          {book.status === "finished" && book.score !== null && (
             <ScoreDisplay score={book.score} className="text-sm shrink-0" />
           )}
         </div>

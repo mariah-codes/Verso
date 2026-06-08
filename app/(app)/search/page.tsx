@@ -7,17 +7,9 @@ import { useBookSearch } from "@/hooks/use-book-search"
 import { BookCard, BookCardSkeleton } from "@/components/book/BookCard"
 import { BookActionMenu, type BookAddedIds } from "@/components/book/BookActionMenu"
 import { RankingFlow, type NewBookInfo } from "@/components/ranking/RankingFlow"
+import { Toast, useToast } from "@/components/shared/Toast"
 import type { BookSearchResult } from "@/lib/open-library"
 import type { BookStatus } from "@/lib/books"
-
-// ── Toast labels ──────────────────────────────────────────────────────────────
-
-const STATUS_LABELS: Record<BookStatus, string> = {
-  finished:     "Marked as read",
-  reading:      "Added to currently reading",
-  want_to_read: "Saved to want-to-read",
-  dnf:          "Added to DNF",
-}
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -26,21 +18,15 @@ export default function SearchPage() {
   const [userId, setUserId]               = useState<string | null>(null)
   const [selectedBook, setSelectedBook]   = useState<BookSearchResult | null>(null)
   const [rankingBook, setRankingBook]     = useState<NewBookInfo | null>(null)
-  const [toast, setToast]                 = useState<string | null>(null)
   const inputRef                          = useRef<HTMLInputElement>(null)
-  const toastTimer                        = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const [toastPayload, showToast, dismissToast] = useToast()
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       setUserId(data.user?.id ?? null)
     })
   }, [])
-
-  function showToast(message: string) {
-    if (toastTimer.current) clearTimeout(toastTimer.current)
-    setToast(message)
-    toastTimer.current = setTimeout(() => setToast(null), 2800)
-  }
 
   function handleSuccess(
     book: BookSearchResult,
@@ -57,7 +43,7 @@ export default function SearchPage() {
         coverUrl:   book.coverUrl ?? null,
       })
     } else {
-      showToast(`${STATUS_LABELS[status]}: ${book.title}`)
+      showToast({ variant: "status", status, bookTitle: book.title })
     }
   }
 
@@ -172,24 +158,14 @@ export default function SearchPage() {
           book={rankingBook}
           userId={userId}
           onClose={() => setRankingBook(null)}
-          onComplete={() => showToast(`Ranked: ${rankingBook.title}`)}
+          onComplete={() =>
+            showToast({ variant: "status", status: "finished", bookTitle: rankingBook.title })
+          }
         />
       )}
 
       {/* ── Toast ─────────────────────────────────────────────────────────── */}
-      <div
-        aria-live="polite"
-        aria-atomic="true"
-        className={[
-          "fixed bottom-6 inset-x-4 z-50 flex justify-center pointer-events-none",
-          "transition-all duration-300",
-          toast ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2",
-        ].join(" ")}
-      >
-        <div className="bg-foreground text-background text-sm font-medium px-4 py-2.5 rounded-xl shadow-lg max-w-sm text-center">
-          {toast}
-        </div>
-      </div>
+      <Toast payload={toastPayload} onDismiss={dismissToast} />
     </>
   )
 }

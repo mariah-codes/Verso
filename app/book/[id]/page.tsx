@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Image from "next/image"
-import { ChevronLeft } from "lucide-react"
+import { ChevronLeft, CheckCheck, BookOpen, Bookmark } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { RankingFlow, type NewBookInfo } from "@/components/ranking/RankingFlow"
 import { ScoreDisplay } from "@/components/shared/ScoreDisplay"
@@ -40,11 +40,19 @@ interface UserBookData {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const SHELF_OPTIONS: { status: BookStatus; label: string }[] = [
-  { status: "want_to_read", label: "Want to read" },
-  { status: "reading",      label: "Reading"       },
-  { status: "finished",     label: "Finished"      },
-]
+const SHELF_OPTIONS: { status: BookStatus; label: string; Icon: React.ElementType }[] = [
+  { status: "want_to_read", label: "Want to read",       Icon: Bookmark   },
+  { status: "reading",      label: "Currently reading", Icon: BookOpen   },
+  { status: "finished",     label: "Finished",           Icon: CheckCheck },
+] // order matches BookActionMenu: Want to read → Currently reading → Finished
+
+/** Quick lookup — icon for the closed trigger button. */
+const STATUS_ICON: Record<BookStatus, React.ElementType> = {
+  want_to_read: Bookmark,
+  reading:      BookOpen,
+  finished:     CheckCheck,
+  dnf:          BookOpen, // DNF not reachable via this dropdown; fallback only
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any
@@ -433,7 +441,10 @@ export default function BookPage() {
                       : "border-border bg-muted/40 text-foreground/70 hover:border-foreground/20",
                   ].join(" ")}
                 >
-                  <span>{changingStatus ? "Saving…" : STATUS_OPTION_LABEL[userBook.status]}</span>
+                  <span className="flex items-center gap-2">
+                    {!changingStatus && (() => { const TriggerIcon = STATUS_ICON[userBook.status]; return <TriggerIcon className="size-4 shrink-0" /> })()}
+                    {changingStatus ? "Saving…" : STATUS_OPTION_LABEL[userBook.status]}
+                  </span>
                   <svg
                     viewBox="0 0 16 16"
                     className={`size-4 transition-transform ${statusOpen ? "rotate-180 text-[#9C4A2F]" : "text-foreground/30"}`}
@@ -446,7 +457,7 @@ export default function BookPage() {
                 {/* Inline options — slide open */}
                 {statusOpen && (
                   <div className="rounded-xl border border-border overflow-hidden">
-                    {SHELF_OPTIONS.map(({ status, label }) => {
+                    {SHELF_OPTIONS.map(({ status, label, Icon }) => {
                       const active = status === userBook.status
                       return (
                         <button
@@ -460,8 +471,7 @@ export default function BookPage() {
                               : "bg-background text-foreground/70 hover:bg-muted/40",
                           ].join(" ")}
                         >
-                          {/* Active indicator dot */}
-                          <span className={`size-1.5 rounded-full shrink-0 ${active ? "bg-[#9C4A2F]" : "bg-transparent"}`} />
+                          <Icon className="size-4 shrink-0" />
                           {label}
                         </button>
                       )
@@ -560,7 +570,7 @@ export default function BookPage() {
 // Label string for the collapsed status button
 const STATUS_OPTION_LABEL: Record<BookStatus, string> = {
   want_to_read: "Want to read",
-  reading:      "Reading",
+  reading:      "Currently reading",
   finished:     "Finished",
   dnf:          "Did not finish",
 }

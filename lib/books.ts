@@ -64,7 +64,26 @@ export async function addBookToShelf(
     return fail(fetchError?.message ?? "Could not retrieve book")
   }
 
-  // ── 2. Upsert the user↔book relationship ─────────────────────────────────
+  // ── 2. Check for an existing row that was finished ───────────────────────
+  // The upsert below only updates the fields we set explicitly. If a book was
+  // previously finished (with tier/rank_position/score populated) and is now
+  // being moved to a non-finished status via search, we must clear ranking data
+  // and close the rank gap — otherwise the stale data persists silently.
+  const { data: existingRow } = await db
+    .from("user_books")
+    .select("id, status, tier, rank_position")
+    .eq("user_id", userId)
+    .eq("book_id", bookRow.id)
+    .maybeSingle()
+
+  const leavingFinished =
+    existingRow?.status === "finished" && status !== "finished"
+
+  if (leavingFinished && existingRow?.tier && existingRow?.rank_position != null) {
+    await closeRankGap(userId, existingRow.tier, existingRow.rank_position)
+  }
+
+  // ── 3. Upsert the user↔book relationship ─────────────────────────────────
   const { data: ubData, error: ubError } = await db
     .from("user_books")
     .upsert(
@@ -75,6 +94,13 @@ export async function addBookToShelf(
         visibility: "visible",
         was_started: status === "reading" || status === "finished",
         finished_at: status === "finished" ? new Date().toISOString() : null,
+        // Clear ranking fields when moving away from finished so stale data
+        // never leaks onto non-finished shelf rows.
+        ...(leavingFinished && {
+          tier: null,
+          rank_position: null,
+          score: null,
+        }),
       },
       { onConflict: "user_id,book_id" },
     )

@@ -22,28 +22,12 @@ interface BookActionMenuProps {
 
 const STATUS_OPTIONS: {
   status: BookStatus
+  Icon: React.ElementType
   label: string
-  sublabel: string
-  icon: React.ReactNode
 }[] = [
-  {
-    status: "finished",
-    label: "Read it",
-    sublabel: "Mark as finished",
-    icon: <CheckCheck className="size-5" />,
-  },
-  {
-    status: "reading",
-    label: "Reading it",
-    sublabel: "Currently reading",
-    icon: <BookOpen className="size-5" />,
-  },
-  {
-    status: "want_to_read",
-    label: "Want to read it",
-    sublabel: "Save for later",
-    icon: <Bookmark className="size-5" />,
-  },
+  { status: "want_to_read", label: "Want to read",       Icon: Bookmark   },
+  { status: "reading",      label: "Currently reading", Icon: BookOpen   },
+  { status: "finished",     label: "Finished",           Icon: CheckCheck },
 ]
 
 /**
@@ -176,7 +160,7 @@ export function BookActionMenu({
 
         {/* Status options */}
         <div className="px-4 py-3 space-y-2">
-          {STATUS_OPTIONS.map(({ status, label, sublabel, icon }) => {
+          {STATUS_OPTIONS.map(({ status, label, Icon }) => {
             const isThis = submitting === status
             const anySubmitting = submitting !== null
 
@@ -186,29 +170,20 @@ export function BookActionMenu({
                 onClick={() => handleSelect(status)}
                 disabled={anySubmitting}
                 className={[
-                  "flex items-center gap-4 w-full rounded-xl px-4 py-3.5",
-                  "text-left transition-colors",
+                  "flex items-center gap-3 w-full rounded-xl px-4 py-4",
+                  "text-sm font-medium text-left transition-colors",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
                   isThis
                     ? "bg-[#9C4A2F]/10 text-[#9C4A2F]"
-                    : "bg-muted/60 hover:bg-muted text-foreground",
+                    : "bg-muted/60 hover:bg-muted text-foreground/70",
                 ].join(" ")}
               >
-                <span
-                  className={
-                    isThis ? "text-[#9C4A2F]" : "text-foreground/50"
-                  }
-                >
-                  {isThis ? (
-                    <Spinner />
-                  ) : (
-                    icon
-                  )}
-                </span>
-                <span className="flex flex-col">
-                  <span className="text-sm font-medium">{label}</span>
-                  <span className="text-xs text-foreground/50">{sublabel}</span>
-                </span>
+                {isThis ? (
+                  <Spinner />
+                ) : (
+                  <Icon className="size-5 shrink-0" strokeWidth={1.75} />
+                )}
+                {label}
               </button>
             )
           })}
