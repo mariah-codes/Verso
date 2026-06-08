@@ -14,8 +14,10 @@ import {
   removeFromShelf,
   restoreRanking,
   markAsFinished,
+  saveBookGenre,
 } from "@/lib/books"
 import { TIER_LABELS } from "@/lib/ranking"
+import { GenrePicker } from "@/components/book/GenrePicker"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -33,6 +35,7 @@ interface UserBookData {
   tier: string | null
   score: number | null
   rankPosition: number | null
+  genre: string | null
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -75,12 +78,16 @@ export default function BookPage() {
   const [confirmRemove, setConfirmRemove] = useState(false)
   const [removing, setRemoving]           = useState(false)
 
+  // Genre edit
+  const [genreEditing, setGenreEditing] = useState(false)
+  const [savingGenre, setSavingGenre]   = useState(false)
+
   // ── Data loading ────────────────────────────────────────────────────────────
 
   const refresh = useCallback(async (uid: string) => {
     const { data: ub } = await db
       .from("user_books")
-      .select("id, status, tier, score, rank_position")
+      .select("id, status, tier, score, rank_position, genre")
       .eq("book_id", id)
       .eq("user_id", uid)
       .maybeSingle()
@@ -91,6 +98,7 @@ export default function BookPage() {
       tier:         ub.tier ?? null,
       score:        ub.score ?? null,
       rankPosition: ub.rank_position ?? null,
+      genre:        ub.genre ?? null,
     } : null)
   }, [id])
 
@@ -274,6 +282,17 @@ export default function BookPage() {
     await refresh(userId)
   }
 
+  async function handleGenreSelect(genre: string) {
+    if (!userBook || !userId || savingGenre) return
+    setSavingGenre(true)
+    const prev = userBook.genre
+    setUserBook({ ...userBook, genre })   // optimistic
+    setGenreEditing(false)
+    const { error } = await saveBookGenre(userBook.userBookId, genre)
+    if (error) setUserBook({ ...userBook, genre: prev })  // revert
+    setSavingGenre(false)
+  }
+
   async function handleRemove() {
     if (!userBook || !userId) return
     setRemoving(true)
@@ -333,28 +352,68 @@ export default function BookPage() {
             </p>
           </div>
 
-          {/* ── Score + tier + re-rank (finished only) ──────────────────────── */}
-          {isFinished && userBook && (
+          {/* ── Score + tier + genre (per-user metadata) ────────────────────── */}
+          {userBook && (
             <div className="w-full max-w-xs flex flex-col items-center gap-2">
-              {userBook.score !== null && (
-                <ScoreDisplay score={userBook.score} className="text-5xl leading-none" />
+              {/* Score + tier · re-rank (finished only) */}
+              {isFinished && (
+                <>
+                  {userBook.score !== null && (
+                    <ScoreDisplay score={userBook.score} className="text-5xl leading-none" />
+                  )}
+                  <div className="flex items-center gap-3">
+                    {userBook.tier && (
+                      <span className="text-sm text-foreground/55">
+                        {TIER_LABELS[userBook.tier as keyof typeof TIER_LABELS] ?? userBook.tier}
+                      </span>
+                    )}
+                    {/* Re-rank button — right next to tier */}
+                    <button
+                      onClick={handleRerank}
+                      disabled={reranking || changingStatus}
+                      className="text-sm font-medium underline underline-offset-2 disabled:opacity-40 transition-opacity"
+                      style={{ color: "#9C4A2F" }}
+                    >
+                      {reranking ? "Clearing…" : "Re-rank"}
+                    </button>
+                  </div>
+                </>
               )}
-              <div className="flex items-center gap-3">
-                {userBook.tier && (
-                  <span className="text-sm text-foreground/55">
-                    {TIER_LABELS[userBook.tier as keyof typeof TIER_LABELS] ?? userBook.tier}
-                  </span>
-                )}
-                {/* Re-rank button — right next to tier */}
+
+              {/* Genre — read state is plain text mirroring the tier line above
+                  ("Narrative non-fiction · Edit"); editing swaps in the picker. */}
+              {genreEditing ? (
+                <div className="w-full space-y-2 text-left">
+                  <p className="text-xs text-foreground/40 font-sans uppercase tracking-widest">
+                    Genre
+                  </p>
+                  <GenrePicker
+                    selected={userBook.genre}
+                    onSelect={handleGenreSelect}
+                    onCancel={() => setGenreEditing(false)}
+                  />
+                </div>
+              ) : userBook.genre ? (
+                <div className="flex items-center gap-3">
+                  <span className="text-sm text-foreground/55">{userBook.genre}</span>
+                  <button
+                    onClick={() => setGenreEditing(true)}
+                    disabled={savingGenre}
+                    className="text-sm font-medium underline underline-offset-2 disabled:opacity-40 transition-opacity"
+                    style={{ color: "#9C4A2F" }}
+                  >
+                    Edit
+                  </button>
+                </div>
+              ) : (
                 <button
-                  onClick={handleRerank}
-                  disabled={reranking || changingStatus}
-                  className="text-sm font-medium underline underline-offset-2 disabled:opacity-40 transition-opacity"
+                  onClick={() => setGenreEditing(true)}
+                  className="text-sm font-medium underline underline-offset-2"
                   style={{ color: "#9C4A2F" }}
                 >
-                  {reranking ? "Clearing…" : "Re-rank"}
+                  + Add genre
                 </button>
-              </div>
+              )}
             </div>
           )}
 
@@ -460,7 +519,8 @@ export default function BookPage() {
                   <button
                     onClick={handleRemove}
                     disabled={removing}
-                    className="text-xs font-medium text-destructive underline underline-offset-2 disabled:opacity-40"
+                    className="text-xs font-medium underline underline-offset-2 disabled:opacity-40"
+                    style={{ color: "#A8321A" }}
                   >
                     {removing ? "Removing…" : "Remove"}
                   </button>

@@ -63,7 +63,7 @@ export function ShelfBookCard({
             <ScoreDisplay score={book.score} className="text-sm shrink-0" />
           )}
         </div>
-        <p className="text-[10px] text-foreground/55 line-clamp-1">
+        <p className="text-xs text-foreground/55 line-clamp-1">
           {book.author}
         </p>
       </div>

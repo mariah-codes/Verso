@@ -2,7 +2,7 @@
 
 *Tech stack, data model, and key algorithms for Verso V1.*
 
-**Last updated:** 2026-06-05
+**Last updated:** 2026-06-07
 
 ---
 
@@ -126,7 +126,6 @@ title           text
 author          text
 cover_url       text
 published_year  int (nullable)
-genre           text (nullable)
 created_at      timestamp
 ```
 
@@ -141,7 +140,9 @@ tier            enum: 'loved' | 'liked' | 'fine' (only if status=finished)
 rank_position   int (nullable, only if status=finished)
 visibility      enum: 'visible' | 'private' (default 'visible')
 was_started     boolean (default false)
-note            text (nullable, optional "what stayed with you")
+genre		text (nullable, per-user genre tag)
+private_note    text (nullable, personal reflection — visible to owner only; renamed from `note` 		via migration)
+public_note     text (nullable, optional short review — visible to friends on book detail)
 added_at        timestamp
 finished_at     timestamp (nullable)
 score           numeric (nullable; frozen at ranking time; null below 10-book threshold)
@@ -150,6 +151,9 @@ score           numeric (nullable; frozen at ranking time; null below 10-book th
 Key behaviors:
 - Weekly picks excludes any book with ANY `user_books` row regardless of status (prevents DNF re-recommendation)
 - V1 taste-match uses mutually visible finished books only (both users must have visibility='visible'). Private-informs-math is planned for V2 via server-side compute — see DECISION_LOG.
+- private_note is owner-only; never returned to other users' queries (RLS or explicit filter)
+- public_note is readable by any authenticated user (same visibility rules as visibility='visible' rows)
+- Both fields are offered for all finished books, not just top-10; the top-10 path surfaces private_note more prominently
 
 ### `follows`
 One-way friend graph.
@@ -240,7 +244,7 @@ When user finishes a book and selects tier:
 
 For each pair (user_a, user_b):
 1. Find finished books where both users have `visibility='visible'`: `shared_books`
-2. If `count(shared_books) < 3`: "Not enough overlap yet"
+2. If `count(shared_books) < 4`: "Not enough overlap yet"
 3. For each user, re-rank only the shared books 1…n by their overall shelf ordering (loved → liked → fine, then `rank_position` ascending). Normalize each to [0,1] via `(rank − 1) / (n − 1)`. Compute absolute difference per shared book.
 4. Average differences. Similarity: `100 - (avg_diff * 100)`. Round.
 5. Computed on demand for V1. Data fetch is the documented swap point for V2 private-informs-math upgrade — see DECISION_LOG.
@@ -255,6 +259,20 @@ Once per week per user:
 ### Milestone detection
 
 Run on profile load and after rank actions. Compare user data to milestone definitions. New milestones cached in `user_milestones` table.
+
+### Genre self-tagging
+
+Single-select, stored per-user in `user_books.genre` (text; validated against `/lib/genres.ts`; writes governed by the existing owner-only user_books policy). Each reader tags their own copy — the same book can be tagged differently by different users, because genre feeds personal milestones and stats. No shared book-level genre; a consensus display label is deferred to V2.
+Offered on the ranking result screen if the user hasn't set a genre for this book; editable on book detail. Picker shows a common-first set of 7 with a "more" expand to the full grouped
+list (18 total). Adaptive per-user ordering is V2.
+
+Common-first (shown first):
+General fiction · Classics · Historical fiction · Narrative non-fiction · Memoir & biography · Science & ideas · Psychology & self-improvement
+
+Full list (grouped, behind "more"):
+Fiction — General fiction · Classics · Historical fiction · Sci-fi & fantasy ·  Mystery & thriller · Romance · Short stories & essays · Poetry & drama
+
+Non-fiction — Memoir & biography · Narrative non-fiction · History & politics · Society & culture · Science & ideas · Psychology & self-improvement · Business & strategy · Art, fashion & design · Travel & place · Other
 
 ---
 

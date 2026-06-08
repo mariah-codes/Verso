@@ -3,16 +3,20 @@
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { BookOpen } from "lucide-react"
-import { SCORE_DISPLAY_THRESHOLD } from "@/lib/ranking"
+import { SCORE_DISPLAY_THRESHOLD, TIER_LABELS, type Tier } from "@/lib/ranking"
 import { saveBookNote } from "@/lib/ranking-data"
+import { fetchUserBookGenre, saveBookGenre } from "@/lib/books"
 import { ScoreDisplay } from "@/components/shared/ScoreDisplay"
+import { GenrePicker } from "@/components/book/GenrePicker"
 
 interface RankingResultProps {
   bookTitle: string
   coverUrl: string | null
-  finishedCount: number         // total finished books (post-ranking)
+  /** Total FINISHED books post-ranking — the denominator in "#X of N". */
+  finishedCount: number
+  tier: Tier | null
   score: number | null
-  overallRank: number | null    // 1-based across all tiers; null = unknown
+  overallRank: number | null    // 1-based across all finished books; null = unknown
   userBookId: string
   onDone: () => void
 }
@@ -21,6 +25,7 @@ export function RankingResult({
   bookTitle,
   coverUrl,
   finishedCount,
+  tier,
   score,
   overallRank,
   userBookId,
@@ -46,6 +51,30 @@ export function RankingResult({
   useEffect(() => {
     if (showNote) textareaRef.current?.focus()
   }, [showNote])
+
+  // Genre — optional, skippable step. Only offered when this row has no genre
+  // yet (a re-rank of an already-tagged book skips it; edit lives on book detail).
+  const [genre, setGenre] = useState<string | null>(null)
+  const [genreLoaded, setGenreLoaded] = useState(false)
+  const [savingGenre, setSavingGenre] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchUserBookGenre(userBookId).then((g) => {
+      if (cancelled) return
+      setGenre(g)
+      setGenreLoaded(true)
+    })
+    return () => { cancelled = true }
+  }, [userBookId])
+
+  async function handleSelectGenre(value: string) {
+    setSavingGenre(true)
+    setGenre(value)            // optimistic — collapses picker into confirmation
+    const { error } = await saveBookGenre(userBookId, value)
+    if (error) setGenre(null)  // revert so the user can retry
+    setSavingGenre(false)
+  }
 
   async function handleSaveNote() {
     if (!note.trim()) { setShowNote(false); return }
@@ -90,13 +119,14 @@ export function RankingResult({
           {showScore && (
             <ScoreDisplay score={score!} className="text-3xl" />
           )}
-          {/* Position line — uses overall rank so no tier label is needed mid-
-              sentence. "#5 of 14 books" reads naturally for every tier, including
-              "Wasn't for me". Shown whenever the rank is known, below threshold
-              or above. */}
-          {overallRank !== null && (
-            <p className="text-xs text-foreground/40 font-sans tabular-nums">
-              #{overallRank} of {finishedCount} books
+          {/* Tier line — folds the overall rank in: "Loved it · #9 of 16".
+              #X counts finished books only (finishedCount is the post-ranking
+              finished total). */}
+          {(tier || overallRank !== null) && (
+            <p className="text-sm text-foreground/55 tabular-nums">
+              {tier && TIER_LABELS[tier]}
+              {tier && overallRank !== null && " · "}
+              {overallRank !== null && `#${overallRank} of ${finishedCount}`}
             </p>
           )}
         </div>
@@ -114,7 +144,7 @@ export function RankingResult({
               className="w-full rounded-xl border border-dashed border-[#9C4A2F]/30 px-4 py-3 text-center"
             >
               <p className="text-xs font-semibold text-[#9C4A2F] tracking-wide">
-                This cracked your top 10 ✦
+                This cracked your top 10
               </p>
               <p className="text-xs text-foreground/40 mt-0.5">
                 What stayed with you? (optional)
@@ -147,6 +177,30 @@ export function RankingResult({
                 </button>
               </div>
             </div>
+          )}
+        </div>
+      )}
+
+      {/* Genre — optional, skippable. Only shown when this book is untagged for
+          this user. Selecting saves immediately; the reveal stays the payoff and
+          this just rides along below it. */}
+      {genreLoaded && (
+        <div
+          className="w-full transition-all duration-300 ease-out"
+          style={{ opacity: visible ? 1 : 0 }}
+        >
+          {genre === null ? (
+            <div className="space-y-2.5">
+              <p className="text-xs text-foreground/40 font-sans tracking-wide">
+                Add a genre? <span className="text-foreground/30">(optional)</span>
+              </p>
+              <GenrePicker onSelect={handleSelectGenre} />
+            </div>
+          ) : (
+            <p className="text-xs text-foreground/45 font-sans">
+              Genre · <span className="text-foreground/70">{genre}</span>
+              {savingGenre && <span className="text-foreground/30"> · saving…</span>}
+            </p>
           )}
         </div>
       )}

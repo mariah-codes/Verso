@@ -108,8 +108,8 @@ export default function SearchPage() {
         <main className="flex-1 px-4 py-5">
           {showPrompt && (
             <div className="flex flex-col items-center justify-center pt-20 gap-3 text-center">
-              <div className="size-14 rounded-full bg-muted flex items-center justify-center">
-                <Search className="size-6 text-foreground/30" />
+              <div className="size-14 rounded-full flex items-center justify-center" style={{ backgroundColor: "#F0EAE0" }}>
+                <Search className="size-6" style={{ color: "#B7AE9F" }} />
               </div>
               <p className="text-xl text-foreground/80" style={{ fontFamily: "var(--font-serif)" }}>
                 Find your next book

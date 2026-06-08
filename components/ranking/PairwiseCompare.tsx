@@ -89,7 +89,7 @@ function BookCover({ book, onClick, accent }: { book: BookPreview; onClick: () =
         ) : (
           <div className="absolute inset-0 bg-muted flex flex-col items-center justify-center gap-1 px-2">
             <BookOpen className="size-6 text-muted-foreground/40" />
-            <span className="text-[9px] text-center text-muted-foreground line-clamp-3 leading-tight">
+            <span className="text-xs text-center text-muted-foreground line-clamp-3 leading-tight">
               {book.title}
             </span>
           </div>

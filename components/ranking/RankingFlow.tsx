@@ -289,7 +289,7 @@ export function RankingFlow({ book, userId, onClose, onComplete }: RankingFlowPr
             : phase === "comparing"
               ? "Rank it"
               : phase === "result"
-                ? "Ranked ✦"
+                ? "Ranked"
                 : " "}
         </span>
         <button
@@ -338,6 +338,7 @@ export function RankingFlow({ book, userId, onClose, onComplete }: RankingFlowPr
             bookTitle={book.title}
             coverUrl={book.coverUrl}
             finishedCount={finishedCount}
+            tier={tier}
             score={newBookScore}
             overallRank={overallRank}
             userBookId={book.userBookId}

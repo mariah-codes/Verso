@@ -2,16 +2,12 @@
 
 *What's in V1, what's deferred, and what comes next.*
 
-**Last updated:** 2026-06-04
+**Last updated:** 2026-06-07
 
 ---
 
 ## Open questions — pending user research
 
-- **Profile structure:** full ranked shelf on profile tab vs. collapsed 
-  behind "see all" vs. dedicated shelf tab. Depends on how often users 
-  want to browse their own/friends' full shelves. Ask in user 
-  research calls.
 
 ---
 
@@ -23,7 +19,7 @@ The minimum honest version of Verso. See `PRODUCT_SPEC.md` for details.
 - Auth (Apple, Google, email)
 - Onboarding with cover grid + optional Goodreads import
 - Pairwise ranking with tiers (loved / liked / fine)
-- Profile with top 5, currently reading, want-to-read, ranked shelf, DNF list, milestones
+- Profile with Top 3, currently reading, want-to-read preview, milestones, DNF list; full ranked shelf + want-to-read on the Shelf tab
 - Friends list sorted by taste-match
 - Friend profiles
 - Search and add books via Open Library
@@ -33,6 +29,8 @@ The minimum honest version of Verso. See `PRODUCT_SPEC.md` for details.
 - Stop reading flow → Save for later or DNF
 - Per-book private toggle
 - PWA install support
+- Genre self-tagging on ranking result + book detail (single-select, stored per-user on user_books)
+- Public + private notes on all finished books (two optional text areas: public review visible to friends, private thoughts visible to owner only)
 
 ### Distribution
 - Web app at joinverso.io
@@ -46,14 +44,10 @@ The minimum honest version of Verso. See `PRODUCT_SPEC.md` for details.
 Things that are good ideas but deliberately not in V1. Date added in parentheses.
 
 ### Probably yes for V2
-- **Friends' average score on book detail** (2026-06-04) — alongside your own 
-  score on the book detail page, show the average score your friends have given 
-  that book (e.g. "You: 10.0 · Friends: 8.4"). If no friends have rated it, 
-  show "—". Beli-style: no minimum threshold, just show what exists. Requires 
-  fetching all followed users' user_books rows for a given book and averaging 
-  their scores. Build after taste-match (Day 8) since it shares the same 
-  friends-who-rated-this query pattern.
-- **Notes / mini-reviews on any finished book** (2026-06-04) — currently the "what stayed with you?" note only appears when a book cracks the top 10. Extend it so any finished book can have an optional short note (Letterboxd-style), surfaced on the result screen and book detail page. Fills the empty space on the result screen and adds a light personal-reflection layer without becoming full reviews.
+- **Adaptive genre picker ordering** (2026-06-07) — surface each user's most-tagged genres first in the picker. Deferred from V1: needs usage history to beat the static common-first default, and new users start cold. Revisit once there's per-user genre data.
+- **Commenting on public book reviews** (2026-06-07) — public + private notes on finished books moved to V1 (see DECISION_LOG 2026-06-07). V2 adds comment threading on public notes — a persistent comment surface on the review itself, distinct from feed-event comments. Requires a new comment target type and book-detail comment UI.
+- **Reading stats section** (2026-06-07) — books read this year, most frequent genre, etc.; toggleable in settings to avoid public-shaming concern. Extends milestones toward raw analytics. Depends on genre data (now in V1).
+- **Friends' average score on book detail** (2026-06-04) — alongside your own score on the book detail page, show the average score your friends have given that book (e.g. "You: 10.0 · Friends: 8.4"). If no friends have rated it, show "—". Beli-style: no minimum threshold, just show what exists. Requires fetching all followed users' user_books rows for a given book and averaging their scores. Build after taste-match (Day 8) since it shares the same friends-who-rated-this query pattern.
 - **Frictionless multi-book capture** (2026-05-30) — share-sheet target + paste-a-list parsing, so users can add every book from a social video / newsletter / tweet without leaving the source or typing titles one by one. Important: this is *capture*, not *content hosting* — the video stays on its platform; Verso removes the friction of getting those books onto your shelf.
 - **Creator / public-figure shelves** (2026-05-30) — let notable readers have discoverable Verso profiles so the follow graph extends beyond personal friends. A reader whose taste you trust (including a social-media book creator, if they join) becomes a follow, and their ranked shelf is the discovery surface — no video needed. Ties to approve-only privacy mode.
 - **Approve-only profile privacy mode** (2026-05-12) — per-book privacy covers V1; full profile privacy if users want it at scale
@@ -64,6 +58,7 @@ Things that are good ideas but deliberately not in V1. Date added in parentheses
 - **Native iOS / React Native port** (2026-04-28) — V1 ships as PWA; port if traction warrants
 
 ### Maybe
+- **Taste / verdict tags** (2026-06-07) — structured tags on finished books. Considered for V1 and declined: descriptive mood tags (dark / funny / cozy) are StoryGraph's signature mechanism and blur Verso's pairwise + social differentiation, and tag-based filtering only pays off at scale. If revisited, the on-brand slice is opinionated verdicts (Overhyped / Underrated) rather than mood descriptors — social, spicy, and distinct from StoryGraph. The free-text public note covers the expressive need at V1 scale.
 - **Book clubs / private groups within the app** — friend graph covers most of this at small scale; deferred
 - **Highlights / capture / quotes** — Maria's original idea; better as integration with Highlighted/Readwise later
 - **Progress tracking on currently-reading** — page input, progress bars; friction high, value uncertain

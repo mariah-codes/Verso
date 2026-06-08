@@ -2,7 +2,7 @@
 
 *Verso V1 — what we're building and why.*
 
-**Last updated:** 2026-05-30
+**Last updated:** 2026-06-07
 
 ---
 
@@ -112,7 +112,11 @@ DNF is not shown here (own-profile-only, per the privacy model). Layout pending 
 2. Tier prompt: "How was it? Loved it / Liked it / Wasn't for me"
 3. Pairwise comparisons within tier (3-5 matchups, binary search)
 4. Position revealed
-5. If cracks top 10 → optional "What stayed with you?" prompt
+5. Genre prompt (if genre not yet set on this book): single-select, common-first pills with a "more" expand to the full grouped list. Skippable.
+6. Note prompts (both optional, both skippable):
+   - "Public review" — short note visible to friends on your book detail
+   - "Private thoughts" — personal reflection, just for you
+   If book cracks top 10, the private thoughts prompt is surfaced more prominently.
 
 ### Stop reading flow
 
@@ -155,7 +159,7 @@ Examples:
 
 Visual: monochrome on cream, terracotta accent for earned, small (~50px), text-driven. Reference Spotify Wrapped, not Duolingo.
 
-Placement: dedicated horizontal scrollable strip mid-profile (below want-to-read, above shelf).
+Placement: dedicated horizontal scrollable strip mid-profile (below want-to-read, above DNF).
 
 ---
 
@@ -170,6 +174,9 @@ Lives at the book level, not the profile level:
 This separates what the algorithm sees from what friends see. Users log honestly, recommendations stay accurate, embarrassing reads stay private.
 
 If users later request full profile privacy, that's V2.
+
+- private_note is never shared — invisible to friends regardless of the per-book visibility toggle
+- public_note follows the book's visibility setting: if the book is marked private, the public note is also hidden
 
 ---
 

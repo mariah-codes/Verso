@@ -36,7 +36,7 @@ export function TabBar() {
                 style={{ color: active ? "#9C4A2F" : "color-mix(in srgb, var(--foreground) 35%, transparent)" }}
               />
               <span
-                className="text-[10px] font-medium tracking-wide"
+                className="text-xs font-medium tracking-wide"
                 style={{ color: active ? "#9C4A2F" : "color-mix(in srgb, var(--foreground) 35%, transparent)" }}
               >
                 {label}

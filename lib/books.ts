@@ -247,6 +247,38 @@ export async function restoreRanking(
 }
 
 /**
+ * Reads the current user's genre tag for one user_books row (null if untagged).
+ * Used by the ranking result screen to decide whether to offer the picker.
+ */
+export async function fetchUserBookGenre(
+  userBookId: string,
+): Promise<string | null> {
+  const { data } = await db
+    .from("user_books")
+    .select("genre")
+    .eq("id", userBookId)
+    .maybeSingle()
+  return data?.genre ?? null
+}
+
+/**
+ * Saves a genre tag on a single user_books row. Genre is PER-USER: we update by
+ * the row's own id, so this only ever touches the caller's tag — RLS's
+ * owner-only UPDATE policy enforces that at the DB layer too. Never writes a
+ * shared field, never touches another user's row.
+ */
+export async function saveBookGenre(
+  userBookId: string,
+  genre: string,
+): Promise<{ error: string | null }> {
+  const { error } = await db
+    .from("user_books")
+    .update({ genre })
+    .eq("id", userBookId)
+  return { error: error?.message ?? null }
+}
+
+/**
  * Permanently removes a book from the user's shelf.
  * If the book was ranked, closes the position gap before deleting.
  */

@@ -6,7 +6,19 @@ Most recent first. Each entry: date, decision, reasoning.
 
 ---
 
+## 2026-06-07
+
+**Genre self-tagging in V1 — per-user.** Single-select genre stored per-user on user_books, not as a shared books-level value: genre feeds personal milestones and stats, so what matters is what the book is to that reader (no single source of truth needed). Offered on the result screen if unset, editable on book detail. Grouped Fiction / Non-fiction, 19 options incl. Other (see ARCHITECTURE); the picker shows a common-first ~7 with a "more" expand, keeping the frequent case fast without forcing the tail into "Other". Rejected: a first-tagger shared value (pollutes each reader's stats with someone else's judgment) and StoryGraph-style mood/taste tags (cut against the pairwise + social differentiation, only pay off at scale). Adaptive per-user ordering deferred to V2.
+
+**Public + private notes replace the single note field in V1.** Splitting later would force users to re-classify notes they'd already written, so do it now: note → private_note (rename, no data loss) + new public_note, both nullable on user_books. Two optional text areas on the result screen for all finished books (not just top-10), editable on book detail. Private note = personal reflection, owner-only; public note = a short review visible to friends on your book detail. Commenting on public notes is a new surface, distinct from feed-event comments — deferred to V2. Folds in the roadmap's "notes on any finished book."
+
+
+**Reading goals and 3+ currently-reading deferred past soft launch.** Custom reading goals (by count, genre, or author) stay V2; the existing "2026 reading challenge" entry covers the simpler count-based version. Reading more than 3 books simultaneously was a single power-user data point — kept as validate-first in V2, revisit after user research confirms it's a real need across the core demo.
+
+---
+
 ## 2026-06-06
+
 **Ranking tiers relabeled to include a genuine negative option.** Old tiers (Loved it / Liked it / It was fine) were all non-negative — no honest way to log a book you disliked. New labels: Loved it (8–10) / Liked it (5–7.9) / Wasn't for me (1–4.9). Bands and the stored enum are unchanged; only display copy changes. "Liked it" absorbs the old neutral "fine" range, and the bottom band — already 1–4.9 — finally has a label matching its purpose. Aligns with Beli's positive/neutral/negative split.
 
 
@@ -15,6 +27,7 @@ Most recent first. Each entry: date, decision, reasoning.
 ---
 
 ## 2026-06-05
+
 **Taste-match uses rank position, not the frozen score.** Scores are midpoint-interpolated per shelf and aren't comparable across users — two people can rank identically and still have different scores. Rank position is the cross-user-comparable signal of agreement. (Would revisit only if scores ever became globally calibrated.) V1 also uses mutually-visible books only — private-informs-math deferred to V2 (needs server-side compute).
 
 **Taste-match normalizes over the shared set, not the full shelf.** Each user's rank is taken only among the books both have finished (re-ranked 1…n within that overlap), then normalized via (rank−1)/(n−1). Normalizing by full-shelf length would penalize pairs with very different shelf sizes even when they ordered shared books identically. Built as a pure function in /lib/taste-match.ts with the data fetch as a documented swap point — the V2 "private informs math" upgrade replaces only the fetch, not the algorithm.

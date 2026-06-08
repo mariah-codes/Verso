@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       books: {
@@ -44,7 +19,6 @@ export type Database = {
           author: string
           cover_url: string
           created_at: string
-          genre: string | null
           google_books_id: string | null
           id: string
           open_library_id: string | null
@@ -55,7 +29,6 @@ export type Database = {
           author: string
           cover_url: string
           created_at?: string
-          genre?: string | null
           google_books_id?: string | null
           id?: string
           open_library_id?: string | null
@@ -66,7 +39,6 @@ export type Database = {
           author?: string
           cover_url?: string
           created_at?: string
-          genre?: string | null
           google_books_id?: string | null
           id?: string
           open_library_id?: string | null
@@ -279,9 +251,11 @@ export type Database = {
           added_at: string
           book_id: string
           finished_at: string | null
+          genre: string | null
           id: string
           note: string | null
           rank_position: number | null
+          score: number | null
           status: Database["public"]["Enums"]["book_status"]
           tier: Database["public"]["Enums"]["book_tier"] | null
           user_id: string
@@ -292,9 +266,11 @@ export type Database = {
           added_at?: string
           book_id: string
           finished_at?: string | null
+          genre?: string | null
           id?: string
           note?: string | null
           rank_position?: number | null
+          score?: number | null
           status: Database["public"]["Enums"]["book_status"]
           tier?: Database["public"]["Enums"]["book_tier"] | null
           user_id: string
@@ -305,9 +281,11 @@ export type Database = {
           added_at?: string
           book_id?: string
           finished_at?: string | null
+          genre?: string | null
           id?: string
           note?: string | null
           rank_position?: number | null
+          score?: number | null
           status?: Database["public"]["Enums"]["book_status"]
           tier?: Database["public"]["Enums"]["book_tier"] | null
           user_id?: string
@@ -395,7 +373,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      shift_rank_positions: {
+        Args: { p_from_position: number; p_tier: string; p_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       book_status: "want_to_read" | "reading" | "finished" | "dnf"
@@ -528,9 +509,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       book_status: ["want_to_read", "reading", "finished", "dnf"],
