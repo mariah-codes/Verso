@@ -193,6 +193,11 @@ export default function BookPage() {
         showToast({ variant: "error", message: "Couldn’t update — try again" })
       } else if (newStatus === "dnf") {
         showToast({ variant: "dnf", bookTitle: book?.title })
+      } else {
+        // want_to_read / reading — confirm with the matching status toast so no
+        // dropdown status change is silent. (Finished doesn't reach here: it opens
+        // the ranking flow, which is its own feedback.)
+        showToast({ variant: "status", status: newStatus, bookTitle: book?.title })
       }
     }
 
@@ -217,13 +222,19 @@ export default function BookPage() {
       .select("id")
       .single()
 
-    if (!error && ub) {
+    if (error || !ub) {
+      showToast({ variant: "error", message: "Couldn’t add — try again" })
+    } else {
       await refresh(userId)
       if (status === "finished") {
+        // Finished opens the ranking flow — that's its own feedback, no toast.
         prevStatusRef.current = "not_in_library"
         rankingDoneRef.current = false
         setRankingBook({ bookId: book.id, userBookId: ub.id,
                          title: book.title, coverUrl: book.coverUrl })
+      } else {
+        // want_to_read / reading — confirm the add with the matching status toast.
+        showToast({ variant: "status", status, bookTitle: book.title })
       }
     }
 
@@ -625,9 +636,19 @@ export default function BookPage() {
           userId={userId}
           onClose={handleRankingCancel}
           onComplete={async () => {
+            // This onComplete is shared by the re-rank flow. Only a FRESH finish
+            // should confirm "Marked as Finished" — a re-rank (prevStatus
+            // "reranking" or the broken-state "finished") must stay silent, since
+            // the book was already finished. Capture before the await/ref reset.
+            const wasFreshFinish =
+              prevStatusRef.current !== "reranking" &&
+              prevStatusRef.current !== "finished"
             rankingDoneRef.current = true
             rerankSnapshotRef.current = null
             await refresh(userId)
+            if (wasFreshFinish) {
+              showToast({ variant: "status", status: "finished", bookTitle: book?.title })
+            }
           }}
         />
       )}

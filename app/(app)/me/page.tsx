@@ -12,6 +12,7 @@ import { fetchAllShelves, type UserProfile, type ShelfBook } from "@/lib/profile
 import { ShelfBookCardSkeleton } from "@/components/book/ShelfBookCard"
 import { ProfileBody } from "@/components/profile/ProfileBody"
 import { RankingFlow, type NewBookInfo } from "@/components/ranking/RankingFlow"
+import { Toast, useToast } from "@/components/shared/Toast"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -32,6 +33,7 @@ export default function MePage() {
   const [userId, setUserId]       = useState<string | null>(null)
   const [rankingBook, setRankingBook] = useState<NewBookInfo | null>(null)
   const [markingId, setMarkingId] = useState<string | null>(null) // userBookId being marked
+  const [toastPayload, showToast, dismissToast] = useToast()
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -151,11 +153,18 @@ export default function MePage() {
           userId={userId}
           onClose={() => setRankingBook(null)}
           onComplete={() => {
+            // /me only opens ranking from "Mark finished" (never a re-rank), so
+            // this is always a fresh finish — confirm it. Capture the title before
+            // clearing rankingBook. Cancel goes through onClose and stays silent.
+            showToast({ variant: "status", status: "finished", bookTitle: rankingBook.title })
             setRankingBook(null)
             load() // refresh shelf after ranking
           }}
         />
       )}
+
+      {/* ── Toast ────────────────────────────────────────────────────────── */}
+      <Toast payload={toastPayload} onDismiss={dismissToast} />
     </>
   )
 }

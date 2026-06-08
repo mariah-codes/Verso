@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import {
   Bookmark,
   BookOpen,
@@ -32,8 +33,10 @@ const STATUS_CONFIG: Record<
   BookStatus,
   { Icon: LucideIcon; label: string }
 > = {
+  // "Saved to …" reads as a complete sentence and is correct on both the "add"
+  // path (book wasn't on the shelf) and the "change" path (already on the shelf).
   want_to_read: { Icon: Bookmark,  label: "Saved to Want to read"       },
-  reading:      { Icon: BookOpen,  label: "Moved to Currently reading"  },
+  reading:      { Icon: BookOpen,  label: "Saved to Currently reading"  },
   finished:     { Icon: Check,     label: "Marked as Finished"          },
   dnf:          { Icon: BookX,     label: "Moved to Did not finish"     },
 }
@@ -62,6 +65,9 @@ interface ToastProps {
 export function Toast({ payload, onDismiss }: ToastProps) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [visible, setVisible] = useState(false)
+  // document.body only exists after mount — guards the portal against SSR.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     if (payload) {
@@ -78,7 +84,7 @@ export function Toast({ payload, onDismiss }: ToastProps) {
     return () => { if (timer.current) clearTimeout(timer.current) }
   }, [payload, onDismiss])
 
-  if (!payload) return null
+  if (!payload || !mounted) return null
 
   // Resolve content
   let Icon: LucideIcon
@@ -109,18 +115,35 @@ export function Toast({ payload, onDismiss }: ToastProps) {
     bookTitle = payload.bookTitle
   }
 
-  return (
+  // Portal to <body> so the toast's `fixed` positioning is ALWAYS anchored to the
+  // viewport, never to a per-page container. Rendered inline, any ancestor with a
+  // transform/filter/contain would re-anchor it (re-creating the containing block)
+  // and the toast would sit at a different height per page — the Search-vs-detail
+  // inconsistency. As a direct child of <body> it can't happen.
+  //
+  // Sit just above the bottom tab nav. The nav is ~63px tall (py-2.5 + 22px icon +
+  // label + border) PLUS its own safe-area-inset-bottom on notched devices, so the
+  // toast's offset = that inset + 4.25rem (68px) leaves a small, even gap above the
+  // bar on every device. On nav-less pre-auth screens it just sits a touch higher.
+  return createPortal(
     <div
       aria-live="polite"
       aria-atomic="true"
-      className="fixed bottom-6 inset-x-4 z-50 flex justify-center pointer-events-none"
+      className="fixed inset-x-4 z-50 flex justify-center pointer-events-none"
+      style={{ bottom: "calc(env(safe-area-inset-bottom) + 4.25rem)" }}
     >
       <div
         className="flex items-start gap-3 w-full max-w-sm pointer-events-auto transition-all duration-300 ease-out"
         style={{
+          // `opacity` here is only the transient show/hide fade. The translucent
+          // SURFACE is the rgba background + backdrop blur below — so text and icon
+          // (full-opacity children) stay crisp; only the panel lets the cream
+          // background softly through. ~90% keeps light text legible.
           opacity:   visible ? 1 : 0,
           transform: visible ? "translateY(0)" : "translateY(6px)",
-          backgroundColor: "#1F1B16",
+          backgroundColor: "rgba(31, 27, 22, 0.9)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
           borderRadius: "14px",
           padding: "14px 18px",
           boxShadow: "0 6px 22px rgba(31,27,22,0.14)",
@@ -151,7 +174,8 @@ export function Toast({ payload, onDismiss }: ToastProps) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
