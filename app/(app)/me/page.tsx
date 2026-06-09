@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
-import Image from "next/image"
+import { ProfileIdentity } from "@/components/profile/ProfileIdentity"
 import { useRouter } from "next/navigation"
 import { Pencil, LogOut } from "lucide-react"
 import { supabase } from "@/lib/supabase"
@@ -78,10 +78,6 @@ export default function MePage() {
     profile: null, reading: [], wantToRead: [], finished: [], dnf: [],
   }
 
-  const initials = profile?.displayName
-    ? profile.displayName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase()
-    : "?"
-
   return (
     <>
       <div className="min-h-screen bg-background pb-16">
@@ -105,21 +101,12 @@ export default function MePage() {
             </button>
           </div>
 
-          <div className="size-20 rounded-full overflow-hidden bg-muted ring-2 ring-border shrink-0">
-            {profile?.photoUrl ? (
-              <Image src={profile.photoUrl} alt={profile.displayName} width={80} height={80} className="object-cover size-full" />
-            ) : (
-              <div className="size-full flex items-center justify-center bg-[#9C4A2F]/10">
-                <span className="text-2xl font-medium text-[#9C4A2F]" style={{ fontFamily: "var(--font-serif)" }}>
-                  {initials}
-                </span>
-              </div>
-            )}
-          </div>
+          <ProfileIdentity
+            displayName={profile?.displayName ?? "Reader"}
+            username={profile?.username ?? null}
+            photoUrl={profile?.photoUrl ?? null}
+          />
 
-          <h1 className="text-2xl text-foreground text-center" style={{ fontFamily: "var(--font-serif)" }}>
-            {profile?.displayName ?? "Reader"}
-          </h1>
           <p className="text-sm text-foreground/45 italic text-center max-w-xs leading-relaxed">
             Your reading taste signature will appear here once you’ve rated a few books.
           </p>

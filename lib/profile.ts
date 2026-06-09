@@ -12,6 +12,7 @@ const db = supabase as any
 export interface UserProfile {
   id: string
   displayName: string
+  username: string
   photoUrl: string | null
   createdAt: string
 }
@@ -69,23 +70,48 @@ const SHELF_SELECT = `
 
 // ── Queries ───────────────────────────────────────────────────────────────────
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function rowToProfile(data: any): UserProfile {
+  return {
+    id: data.id,
+    displayName: data.display_name,
+    username: data.username,
+    photoUrl: data.photo_url ?? null,
+    createdAt: data.created_at,
+  }
+}
+
+const PROFILE_SELECT = "id, display_name, username, photo_url, created_at" as const
+
 export async function fetchProfile(
   userId: string
 ): Promise<UserProfile | null> {
   const { data, error } = await db
     .from("users")
-    .select("id, display_name, photo_url, created_at")
+    .select(PROFILE_SELECT)
     .eq("id", userId)
     .single()
 
   if (error || !data) return null
+  return rowToProfile(data)
+}
 
-  return {
-    id: data.id,
-    displayName: data.display_name,
-    photoUrl: data.photo_url ?? null,
-    createdAt: data.created_at,
-  }
+/**
+ * Resolve a profile by username (case-insensitive, via the lower(username)
+ * index). Returns null when no user holds that handle — the /[username] route
+ * uses this to drive its "user not found" state.
+ */
+export async function fetchProfileByUsername(
+  username: string
+): Promise<UserProfile | null> {
+  const { data, error } = await db
+    .from("users")
+    .select(PROFILE_SELECT)
+    .ilike("username", username.toLowerCase()) // no wildcards in valid handles
+    .maybeSingle()
+
+  if (error || !data) return null
+  return rowToProfile(data)
 }
 
 /**

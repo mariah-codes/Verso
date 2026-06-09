@@ -28,6 +28,27 @@ export const USERNAME_REGEX = /^[a-z][a-z0-9]{2,19}$/
 /** Seed used when a name cleans down to nothing usable. */
 export const USERNAME_DEFAULT_SEED = "reader"
 
+/**
+ * Handles no one may claim — top-level app routes (so a username can never shadow
+ * /search etc.) plus common system/brand words. Static routes already win over
+ * the /[username] dynamic route in Next, but this is defense-in-depth and also
+ * stops auto-generation from emitting one.
+ *
+ * ⚠️ Mirrored in SQL (public.username_reserved). Keep the two lists in sync.
+ */
+export const RESERVED_USERNAMES = new Set<string>([
+  // current + planned routes
+  "home", "friends", "search", "shelf", "me", "book", "user", "settings",
+  "onboarding", "auth", "signin", "signup", "login", "logout", "register",
+  // system / generic
+  "admin", "api", "app", "www", "root", "about", "help", "support", "contact",
+  "terms", "privacy", "legal", "status", "blog", "explore", "feed", "discover",
+  "notifications", "messages", "profile", "account", "new", "edit", "static",
+  "public", "assets", "favicon", "robots", "sitemap", "null", "undefined",
+  // brand
+  "verso", "official", "team", "staff",
+])
+
 export interface UsernameValidation {
   ok: boolean
   /** Human-readable reason when ok === false. */
@@ -52,6 +73,8 @@ export function validateUsername(input: string): UsernameValidation {
     return { ok: false, error: "Username can only contain lowercase letters and numbers." }
   if (!USERNAME_REGEX.test(input))
     return { ok: false, error: "Invalid username." }
+  if (RESERVED_USERNAMES.has(input))
+    return { ok: false, error: "That username isn’t available." }
   return { ok: true }
 }
 
