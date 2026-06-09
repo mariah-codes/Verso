@@ -130,6 +130,11 @@
   }
   html {
     @apply font-sans;
+    /* Prevent pinch-to-zoom. iOS Safari ignores viewport user-scalable=no since
+       iOS 10; touch-action is the only cross-browser way to enforce no-zoom.
+       pan-x pan-y allows both vertical scroll and horizontal scroll strips
+       while blocking multi-finger zoom gestures. */
+    touch-action: pan-x pan-y;
   }
 }
 
