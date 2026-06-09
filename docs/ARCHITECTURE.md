@@ -2,7 +2,7 @@
 
 *Tech stack, data model, and key algorithms for Verso V1.*
 
-**Last updated:** 2026-06-07
+**Last updated:** 2026-06-08
 
 ---
 
@@ -251,10 +251,22 @@ For each pair (user_a, user_b):
 
 ### Weekly picks
 
-Once per week per user:
-1. Get books in friends' top-10s and recent want-to-reads, where user has NO `user_books` row at all
-2. Score by weighted average of (taste-match-with-friend × friend's-normalized-rank)
-3. Take top 5. Save provenance (which friends, what context)
+Computed lazily, once per week per user (on first Home load of the week; no scheduled job in V1).
+Three-layer separation so the trigger can change without rewriting the logic:
+
+Pure compute (/lib/weekly-picks.ts): takes the user's data + followed users' shelves + taste-match scores, returns a ranked pick list with provenance. No Supabase, no timing.
+Cache/get-or-compute (data layer): check weekly_picks for current week_of; return if present, else compute + insert + return. Idempotent via UNIQUE(user_id, week_of).
+Trigger: Home page calls layer 2 on load. (A future cron can call layer 2 for all users to pre-warm the cache; the read path is unchanged.)
+
+Candidate selection:
+
+Candidates = books in followed users' loved/liked tiers where the current user has NO user_books row at all. (Not restricted to top 10.)
+Score each candidate by taste-match-with-that-friend × tier weight (loved > liked). Aggregate across friends if multiple recommend it.
+If fewer than 5 loved/liked candidates, fill remaining slots from followed users' want-to-read books (fallback, scored lower).
+Take top 5. Store provenance in reasons (see below).
+
+reasons jsonb shape (per book): { book_id: { tier: 'loved'|'liked'|'want_to_read', friend_name: string, friend_count: int } } — drives the caption ("Loved by Sarah", "Loved by Sarah & 2 others", "Liked by James", "Maya wants to read this").
+RLS note: weekly_picks gains an owner INSERT/UPDATE policy (was service-role-only) to support client-side compute-on-read.
 
 ### Milestone detection
 

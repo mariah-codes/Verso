@@ -2,7 +2,7 @@
 
 *Verso V1 — what we're building and why.*
 
-**Last updated:** 2026-06-07
+**Last updated:** 2026-06-08
 
 ---
 

@@ -132,3 +132,13 @@
     @apply font-sans;
   }
 }
+
+/* Hide scrollbars on horizontal scroll rows (e.g. weekly picks) while keeping
+   the row scrollable. */
+.scrollbar-none {
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* old Edge/IE */
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;                  /* Chrome/Safari */
+}

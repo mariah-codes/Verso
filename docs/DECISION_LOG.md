@@ -6,6 +6,24 @@ Most recent first. Each entry: date, decision, reasoning.
 
 ---
 
+## 2026-06-08
+
+**Weekly picks: candidates come from friends' loved/liked books, not "top 10."** The original spec pulled from friends' top-10s, which discards most of a heavy reader's signal (a 30-book shelf with 20 loved/liked has far more than 10 usable recommendations). Candidate pool is now any book a friend has finished in the loved or liked tier, weighted by taste-match × tier strength. Rank position still feeds the scoring math but is no longer a cutoff.
+
+
+**Want-to-read books are a fallback candidate source only.** A friend's want-to-read is a weak signal (unread, you might both dislike it). Want-to-read candidates are used only to fill remaining pick slots when there aren't enough loved/liked candidates, and surface with honestly-soft provenance ("Maya wants to read this").
+
+
+**Pick provenance surfaces tier, not rank, in the UI.** "Loved by Sarah" / "Loved by Sarah & 2 others" / "Liked by James" / "Maya wants to read this." Rank number is deliberately never shown — "Sarah's #16" reads as a backhanded compliment even when the match is strong. Tier is the honest, always-flattering signal; rank stays internal to scoring.
+
+
+**Weekly picks computed on-read, not via scheduled job.** No cron infrastructure exists and it's over-engineered at V1 scale (50-100 users). On Home load, check weekly_picks for the current week_of (Monday); if absent, compute live and insert (cached for the rest of the week). Switchable to cron-precompute later without changing the read path — see ARCHITECTURE three-layer note. Requires an owner INSERT policy on weekly_picks (the original service-role-only RLS assumed a cron writer).
+
+
+**"Cracked top 10" feed event cut from V1.** No stored signal for when a book entered a user's top 10, and almost no user has a top 10 at launch. Feed ships with two event types: friend ranked a finished book, friend added a want-to-read. (See ROADMAP V2.)
+
+---
+
 ## 2026-06-07
 
 **Genre self-tagging in V1 — per-user.** Single-select genre stored per-user on user_books, not as a shared books-level value: genre feeds personal milestones and stats, so what matters is what the book is to that reader (no single source of truth needed). Offered on the result screen if unset, editable on book detail. Grouped Fiction / Non-fiction, 19 options incl. Other (see ARCHITECTURE); the picker shows a common-first ~7 with a "more" expand, keeping the frequent case fast without forcing the tail into "Other". Rejected: a first-tagger shared value (pollutes each reader's stats with someone else's judgment) and StoryGraph-style mood/taste tags (cut against the pairwise + social differentiation, only pay off at scale). Adaptive per-user ordering deferred to V2.

@@ -1,6 +1,7 @@
 // ── Follow system — pure Supabase interactions, no React ──────────────────────
 
 import { supabase } from "./supabase"
+import { invalidateWeeklyPicks } from "./weekly-picks-data"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any
@@ -33,6 +34,9 @@ export async function followUser(
   const { error } = await db
     .from("follows")
     .insert({ follower_id: followerId, followed_id: followedId })
+  // Follow graph changed → drop the acting user's cached picks so the next Home
+  // load recomputes with the new friend included. Only on success.
+  if (!error) await invalidateWeeklyPicks(followerId)
   return { error: error?.message ?? null }
 }
 
@@ -45,6 +49,9 @@ export async function unfollowUser(
     .delete()
     .eq("follower_id", followerId)
     .eq("followed_id", followedId)
+  // Follow graph changed → drop the acting user's cached picks so the unfollowed
+  // person's books stop appearing on the next Home load. Only on success.
+  if (!error) await invalidateWeeklyPicks(followerId)
   return { error: error?.message ?? null }
 }
 

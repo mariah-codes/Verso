@@ -80,6 +80,7 @@ Not committed. Notes for future thinking.
 - **Power-user features** — sub-collections, custom tags
 - **Reader analytics / yearly Wrapped**
 - **Book club coordination tools** (if community demand emerges)
+- **Collaborative-filtering recommendations ("Readers like you loved this").** V1 computes rank-based taste similarity between you and people you follow; V3 computes it between you and the whole user base to surface recs from taste-neighbors you don't follow. Same underlying signal (rank-based similarity) at scale — V1's rankings and taste-match data are exactly what trains it. Needs significant user/ranking volume to be meaningful.
 
 ---
 
