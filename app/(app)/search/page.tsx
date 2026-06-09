@@ -42,6 +42,11 @@ export default function SearchPage() {
         title:      book.title,
         coverUrl:   book.coverUrl ?? null,
       })
+    } else if (status === "dnf") {
+      // DNF: no ranking flow (the menu already closes itself for non-finished);
+      // fire the existing DNF toast. Row written by addBookToShelf matches the
+      // dropdown/sheet DNF paths (status='dnf', visibility 'visible', null ranking).
+      showToast({ variant: "dnf", bookTitle: book.title })
     } else {
       showToast({ variant: "status", status, bookTitle: book.title })
     }

@@ -6,6 +6,12 @@ Most recent first. Each entry: date, decision, reasoning.
 
 ---
 
+## 2026-06-09
+
+**DNF books now visibility='private' at the data level (was 'visible' + app-layer filtering).** All DNF write paths set private; resurrection resets to visible. RLS "user reads own regardless" keeps your own DNF list working while making friend-visibility leaks structurally impossible — important ahead of the feed, which reads followed users' shelves. Also: all DNF rows now set was_started=true (a DNF presupposes the book was started).
+
+---
+
 ## 2026-06-08
 
 **Weekly picks: candidates come from friends' loved/liked books, not "top 10."** The original spec pulled from friends' top-10s, which discards most of a heavy reader's signal (a 30-book shelf with 20 loved/liked has far more than 10 usable recommendations). Candidate pool is now any book a friend has finished in the loved or liked tier, weighted by taste-match × tier strength. Rank position still feeds the scoring math but is no longer a cutoff.

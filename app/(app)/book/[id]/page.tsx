@@ -215,8 +215,10 @@ export default function BookPage() {
         user_id:    userId,
         book_id:    book.id,
         status,
-        visibility: "visible",
-        was_started: status === "reading" || status === "finished",
+        // DNF is private at the data level; everything else is visible. DNF also
+        // presupposes the book was started.
+        visibility:  status === "dnf" ? "private" : "visible",
+        was_started: status === "reading" || status === "finished" || status === "dnf",
         finished_at: status === "finished" ? new Date().toISOString() : null,
       })
       .select("id")
@@ -232,6 +234,10 @@ export default function BookPage() {
         rankingDoneRef.current = false
         setRankingBook({ bookId: book.id, userBookId: ub.id,
                          title: book.title, coverUrl: book.coverUrl })
+      } else if (status === "dnf") {
+        // DNF inserts status='dnf' (visibility 'visible', tier/rank/score null) —
+        // same row shape as the dropdown/sheet DNF paths. No ranking flow.
+        showToast({ variant: "dnf", bookTitle: book.title })
       } else {
         // want_to_read / reading — confirm the add with the matching status toast.
         showToast({ variant: "status", status, bookTitle: book.title })
@@ -546,25 +552,27 @@ export default function BookPage() {
                 )}
               </>
             ) : (
-              /* Not on shelf — show all three options directly */
+              /* Not on shelf — show all four options directly as status rows */
               userId && (
                 <div className="space-y-1.5">
                   <p className="text-xs text-foreground/40 font-sans uppercase tracking-widest px-0.5 mb-2">
                     Add to shelf
                   </p>
-                  {SHELF_OPTIONS.map(({ status, label }) => (
+                  {STATUS_DROPDOWN_OPTIONS.map(({ status, label, Icon }) => (
                     <button
                       key={status}
                       onClick={() => handleAddToShelf(status)}
                       disabled={changingStatus}
+                      // Row styling copied verbatim from the Search BookActionMenu
+                      // rows so a status option looks identical on both surfaces.
                       className={[
-                        "w-full flex items-center gap-3 px-4 py-3 rounded-xl",
-                        "text-sm text-left border border-border transition-colors",
-                        "text-foreground/70 hover:border-[#9C4A2F]/40 hover:bg-[#9C4A2F]/5",
-                        "disabled:opacity-50",
+                        "flex items-center gap-3 w-full rounded-xl px-4 py-4",
+                        "text-sm font-medium text-left transition-colors",
+                        "disabled:opacity-50 disabled:cursor-not-allowed",
+                        "bg-muted/60 hover:bg-muted text-foreground/70",
                       ].join(" ")}
                     >
-                      <span className="size-1.5 rounded-full shrink-0 bg-foreground/20" />
+                      <Icon className="size-5 shrink-0" strokeWidth={1.75} />
                       {label}
                     </button>
                   ))}

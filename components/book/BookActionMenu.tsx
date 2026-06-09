@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
-import { X, CheckCheck, BookOpen, Bookmark } from "lucide-react"
+import { X, CheckCheck, BookOpen, Bookmark, BookX } from "lucide-react"
 import { addBookToShelf, type BookStatus } from "@/lib/books"
 import type { BookSearchResult } from "@/lib/open-library"
 
@@ -28,6 +28,7 @@ const STATUS_OPTIONS: {
   { status: "want_to_read", label: "Want to read",       Icon: Bookmark   },
   { status: "reading",      label: "Currently reading", Icon: BookOpen   },
   { status: "finished",     label: "Finished",           Icon: CheckCheck },
+  { status: "dnf",          label: "Did not finish",     Icon: BookX      },
 ]
 
 /**

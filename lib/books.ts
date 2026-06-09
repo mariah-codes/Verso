@@ -91,8 +91,11 @@ export async function addBookToShelf(
         user_id: userId,
         book_id: bookRow.id,
         status,
-        visibility: "visible",
-        was_started: status === "reading" || status === "finished",
+        // DNF is private at the data level; every other status is visible. (Upsert,
+        // so re-adding a DNF'd book at another status also flips it back to visible.)
+        visibility: status === "dnf" ? "private" : "visible",
+        // DNF presupposes the book was started.
+        was_started: status === "reading" || status === "finished" || status === "dnf",
         finished_at: status === "finished" ? new Date().toISOString() : null,
         // Clear ranking fields when moving away from finished so stale data
         // never leaks onto non-finished shelf rows.
@@ -116,8 +119,13 @@ export async function addBookToShelf(
 }
 
 /**
- * Moves a "reading" book to "finished" so the ranking flow can open.
- * The ranking flow then sets tier, rank_position, and score.
+ * Moves a book to "finished" so the ranking flow can open. The ranking flow then
+ * sets tier, rank_position, and score.
+ *
+ * Also resets visibility='visible': this is the dnf→finished resurrection path
+ * (a DNF row is visibility='private'), and a finished book is always shareable, so
+ * forcing visible here un-hides a resurrected book. (For the common reading→finished
+ * case the row is already visible, so this is a no-op.)
  */
 export async function markAsFinished(
   userBookId: string,
@@ -128,6 +136,7 @@ export async function markAsFinished(
       status: "finished",
       was_started: true,
       finished_at: new Date().toISOString(),
+      visibility: "visible",
     })
     .eq("id", userBookId)
   return { error: error?.message ?? null }
@@ -176,6 +185,8 @@ export async function changeBookStatus(
 ): Promise<{ error: string | null }> {
   const leavingFinished = prevStatus === "finished" && newStatus !== "finished"
   const enteringFinished = newStatus === "finished"
+  const enteringDnf = newStatus === "dnf"
+  const leavingDnf = prevStatus === "dnf" && newStatus !== "dnf"
 
   // Close the rank gap before clearing position data
   if (leavingFinished && prevTier && prevRankPosition !== null) {
@@ -184,7 +195,8 @@ export async function changeBookStatus(
 
   const updates: Record<string, unknown> = {
     status: newStatus,
-    was_started: newStatus === "reading" || newStatus === "finished"
+    // A book in any "engaged" state has been started — and DNF presupposes it.
+    was_started: newStatus === "reading" || newStatus === "finished" || newStatus === "dnf"
       || prevStatus === "reading" || prevStatus === "finished",
     ...(leavingFinished && {
       tier: null,
@@ -195,6 +207,10 @@ export async function changeBookStatus(
     ...(enteringFinished && {
       finished_at: new Date().toISOString(),
     }),
+    // DNF is private at the data level (RLS hides it from other users); leaving
+    // DNF (resurrection) restores visibility so the book shows on friends' views.
+    ...(enteringDnf && { visibility: "private" }),
+    ...(leavingDnf && { visibility: "visible" }),
   }
 
   const { error } = await db
