@@ -1,4 +1,4 @@
-import Image from "next/image"
+import { Avatar } from "@/components/shared/Avatar"
 
 interface ProfileIdentityProps {
   displayName: string
@@ -14,30 +14,9 @@ interface ProfileIdentityProps {
  * subordinate to the name); each page renders its own taste line / controls below.
  */
 export function ProfileIdentity({ displayName, username, photoUrl }: ProfileIdentityProps) {
-  const initials =
-    displayName.trim().split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "?"
-
   return (
     <div className="flex flex-col items-center gap-3">
-      {/* Avatar */}
-      <div className="size-20 rounded-full overflow-hidden bg-muted ring-2 ring-border shrink-0">
-        {photoUrl ? (
-          <Image
-            src={photoUrl}
-            alt={displayName}
-            width={80}
-            height={80}
-            className="object-cover size-full"
-            referrerPolicy="no-referrer"
-          />
-        ) : (
-          <div className="size-full flex items-center justify-center bg-[#9C4A2F]/10">
-            <span className="text-2xl font-medium text-[#9C4A2F]" style={{ fontFamily: "var(--font-serif)" }}>
-              {initials}
-            </span>
-          </div>
-        )}
-      </div>
+      <Avatar displayName={displayName} photoUrl={photoUrl} size={80} initialsClassName="text-2xl" />
 
       {/* Name + @handle — tight unit (~2px gap) */}
       <div className="flex flex-col items-center gap-0.5">

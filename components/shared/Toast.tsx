@@ -9,22 +9,26 @@ import {
   Check,
   Trash2,
   AlertCircle,
+  Info,
   type LucideIcon,
 } from "lucide-react"
 import type { BookStatus } from "@/lib/books"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type ToastVariant = "status" | "removed" | "dnf" | "error"
+export type ToastVariant = "status" | "removed" | "dnf" | "note" | "error"
 
 export interface ToastPayload {
   variant: ToastVariant
   /** For "status" toasts: the BookStatus that was applied. */
   status?: BookStatus
-  /** Book title — shown on the second line for status/removed/dnf toasts. */
+  /** Book title — shown on the second line for status/removed/dnf/note toasts. */
   bookTitle?: string
-  /** For "error" toasts: the message to display. */
+  /** For "error" and "note" toasts: the message to display on the first line. */
   message?: string
+  /** For "note" toasts: optional icon (defaults to Info) — e.g. the status icon
+   *  for "Already finished". */
+  icon?: LucideIcon
 }
 
 // ── Config ────────────────────────────────────────────────────────────────────
@@ -104,6 +108,13 @@ export function Toast({ payload, onDismiss }: ToastProps) {
   } else if (payload.variant === "dnf") {
     Icon      = BookX
     label     = "Did not finish"
+    iconColor = TERRACOTTA
+    bookTitle = payload.bookTitle
+  } else if (payload.variant === "note") {
+    // Neutral informational toast (e.g. "Removed from Want to read",
+    // "Already finished") — custom message + optional status icon.
+    Icon      = payload.icon ?? Info
+    label     = payload.message ?? ""
     iconColor = TERRACOTTA
     bookTitle = payload.bookTitle
   } else {

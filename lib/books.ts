@@ -119,6 +119,66 @@ export async function addBookToShelf(
 }
 
 /**
+ * Save a book that ALREADY exists in the `books` table (e.g. from the feed) to the
+ * user's want-to-read shelf. Used by the feed's save action — one tap, no nav.
+ *
+ * Never overwrites an existing shelf row: if the user already has the book in ANY
+ * status (want/reading/finished/dnf), it's a graceful no-op (`alreadyOnShelf`),
+ * so saving can't silently change a finished/dnf book back to want-to-read. The
+ * UNIQUE(user_id, book_id) constraint makes the check race-safe.
+ */
+export async function saveToWantToRead(
+  bookId: string,
+  userId: string,
+): Promise<{ error: string | null; alreadyOnShelf: boolean }> {
+  const { data: existing } = await db
+    .from("user_books")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("book_id", bookId)
+    .maybeSingle()
+
+  if (existing) return { error: null, alreadyOnShelf: true }
+
+  const { error } = await db.from("user_books").insert({
+    user_id: userId,
+    book_id: bookId,
+    status: "want_to_read",
+    visibility: "visible",
+    was_started: false,
+  })
+
+  // 23505 = unique_violation: a concurrent save beat us → treat as already saved.
+  if (error) {
+    if (error.code === "23505") return { error: null, alreadyOnShelf: true }
+    return { error: error.message, alreadyOnShelf: false }
+  }
+  return { error: null, alreadyOnShelf: false }
+}
+
+/**
+ * Un-save: remove a book from the user's want-to-read shelf (the feed save
+ * toggle's off path).
+ *
+ * DATA SAFETY: the delete is scoped to status='want_to_read', so it can NEVER
+ * delete a finished / reading / dnf row even if called with the wrong book. This
+ * is the second guard behind the icon state (which only offers unsave when the
+ * viewer's status is want_to_read).
+ */
+export async function removeFromWantToRead(
+  bookId: string,
+  userId: string,
+): Promise<{ error: string | null }> {
+  const { error } = await db
+    .from("user_books")
+    .delete()
+    .eq("user_id", userId)
+    .eq("book_id", bookId)
+    .eq("status", "want_to_read")
+  return { error: error?.message ?? null }
+}
+
+/**
  * Moves a book to "finished" so the ranking flow can open. The ranking flow then
  * sets tier, rank_position, and score.
  *
