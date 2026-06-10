@@ -6,6 +6,24 @@ Most recent first. Each entry: date, decision, reasoning.
 
 ---
 
+## 2026-06-10
+
+**Comments attach to reviews (public notes), not to bare ranking events — adopting the Letterboxd/Beli model.** A bare "X ranked Y" event is thin to comment on ("nice score"); the authored *review* (public note) is the real unit of conversation. So the public note becomes a first-class, commentable object. Build order: (A) note authoring + display on book pages, (B) notes surface on feed cards, (C) comments on reviews. This pulls the roadmap's "commenting on public notes" from V2 toward V1, and reframes public notes from a buried top-10-only prompt into a primary feature. Note/comment-thread surface (route vs. sheet) deferred to the C step — the thread design follows naturally once the review object exists.
+
+**Feed reactions changed from flame + smile to heart + comment — overturning the 2026-05-12 "flame/smile/comment" decision.** Going Beli-minimalist, two icons beat three: heart is more universal than flame, and smile added nothing distinct alongside heart in a two-icon set. Feed cards now carry heart + comment (social reactions, grouped left) plus a save bookmark (personal, pushed right). Reaction counts hidden when zero.
+
+**Feed card layout is avatar-led (Beli-style).** Avatar leads as the identity anchor — without it, two followed friends sharing a first name are indistinguishable. Card top row: avatar (left) → text column (name + action + time, serif title, score-or-tier) → cover (right). Reasoning: a feed is about *who did what*; identity-forward is correct, and the picks strip above already gives covers their starring role. Score renders in serif (EB Garamond) via the shared ScoreDisplay, matching the shelf; tier name ("Loved it") is the italic-tertiary fallback below the score threshold.
+
+**Feed save bookmark: three states, scoped to want-to-read only — and a self-initiated save is "pull," not "push."** Save = "is this on my want-to-read." Outline (not saved → tap adds), terracotta-filled (on want-to-read → tap removes), muted-putty-filled (already finished/reading/dnf → inactive, fires an info toast, never mutates). This reverses the earlier lean against a save affordance: the pull-not-push principle bars *friends nominating books to you*, but a save *you* initiate is still pull. Tapping a cover no longer silently adds to want-to-read (was a bug); the explicit bookmark is the only save path. Unsave deletes only want_to_read rows, never other statuses (double-guarded).
+
+**Feed is derived from shelves, two event types, no events table.** "From your circle" is computed from followed users' user_books — ranked (status=finished + rank_position, by finished_at) and want-to-read (by added_at) — merged time-descending, visible rows only, viewer's own activity excluded. Reactions and comments key off the synthetic event identity (event_type, subject_user_id, subject_book_id). "Cracked top 10" is not shipped (no stored signal for when a book entered a top 10 — see 2026-06-08).
+
+**Usernames added: auto-generated at signup, editable later.** Lowercase a–z/0–9, must start with a letter, 3–20 chars; case-insensitive uniqueness via a unique index on lower(username). Generation ladder: first name → first+last → first+last+number. Reserved-words blocklist (route names: home, search, settings, etc.) prevents usernames shadowing routes. Generation + OAuth display-name parsing live in the handle_new_user Postgres trigger (SECURITY DEFINER), since user rows are created by the trigger, not app code. Canonical profile route is /[username]; /user/[id] retained (both render a shared UserProfileView). Profile photos stay null/initials-only by design — auto-pulling Google photos felt intrusive; photo upload is a future opt-in.
+
+**joinverso.io live; PWA shipped.** Domain connected via Vercel (apex 308-redirects to www; canonical is www.joinverso.io). PWA manifest, standalone display, iOS web-app meta, OG/Twitter cards. Pinch-zoom prevention required JavaScript gesture listeners, not just the viewport meta tag — iOS Safari has ignored user-scalable=no since iOS 10, so a touch-action CSS rule plus a PreventZoom client component were both needed; reliable only in the installed PWA, which is the intended distribution.
+
+---
+
 ## 2026-06-09
 
 **DNF books now visibility='private' at the data level (was 'visible' + app-layer filtering).** All DNF write paths set private; resurrection resets to visible. RLS "user reads own regardless" keeps your own DNF list working while making friend-visibility leaks structurally impossible — important ahead of the feed, which reads followed users' shelves. Also: all DNF rows now set was_started=true (a DNF presupposes the book was started).

@@ -2,7 +2,7 @@
 
 *Tech stack, data model, and key algorithms for Verso V1.*
 
-**Last updated:** 2026-06-08
+**Last updated:** 2026-06-10
 
 ---
 
@@ -181,10 +181,10 @@ Feed-event reactions.
 ```
 id                     uuid PK
 user_id                uuid FK → users.id (who reacted)
-event_type             enum: 'ranked' | 'want_to_read' | 'top_10_change'
+event_type             enum: 'ranked' | 'want_to_read'
 event_subject_user_id  uuid FK → users.id (whose event)
 event_subject_book_id  uuid FK → books.id
-reaction_type          enum: 'flame' | 'smile'
+reaction_type          enum: 'heart'
 created_at             timestamp
 ```
 
@@ -193,7 +193,7 @@ Comments on feed events.
 ```
 id                     uuid PK
 user_id                uuid FK → users.id
-event_type             enum: 'ranked' | 'want_to_read' | 'top_10_change'
+event_type             enum: 'ranked' | 'want_to_read'
 event_subject_user_id  uuid FK
 event_subject_book_id  uuid FK
 text                   text

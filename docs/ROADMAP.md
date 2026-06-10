@@ -2,7 +2,7 @@
 
 *What's in V1, what's deferred, and what comes next.*
 
-**Last updated:** 2026-06-07
+**Last updated:** 2026-06-10
 
 ---
 
@@ -24,7 +24,8 @@ The minimum honest version of Verso. See `PRODUCT_SPEC.md` for details.
 - Friend profiles
 - Search and add books via Open Library
 - Weekly picks (3-5 books surfaced from friends' shelves)
-- Feed of friend rankings, want-to-reads, top 10 changes
+- Feed of friend rankings and want-to-reads (avatar-led cards; heart + comment + save)
+- Public notes (reviews) on book pages, surfaced in the feed, with comments — see DECISION_LOG 2026-06-10
 - Reactions and comments on feed events
 - Stop reading flow → Save for later or DNF
 - Per-book private toggle
@@ -45,7 +46,7 @@ Things that are good ideas but deliberately not in V1. Date added in parentheses
 
 ### Probably yes for V2
 - **Adaptive genre picker ordering** (2026-06-07) — surface each user's most-tagged genres first in the picker. Deferred from V1: needs usage history to beat the static common-first default, and new users start cold. Revisit once there's per-user genre data.
-- **Commenting on public book reviews** (2026-06-07) — public + private notes on finished books moved to V1 (see DECISION_LOG 2026-06-07). V2 adds comment threading on public notes — a persistent comment surface on the review itself, distinct from feed-event comments. Requires a new comment target type and book-detail comment UI.
+- ~~**Commenting on public book reviews**~~ — **moved to V1** (see DECISION_LOG 2026-06-10). Comments now attach to the review (public note) as the commentable object, built in three steps: note authoring + display on book pages → notes on feed cards → comments on reviews.
 - **Reading stats section** (2026-06-07) — books read this year, most frequent genre, etc.; toggleable in settings to avoid public-shaming concern. Extends milestones toward raw analytics. Depends on genre data (now in V1).
 - **Friends' average score on book detail** (2026-06-04) — alongside your own score on the book detail page, show the average score your friends have given that book (e.g. "You: 10.0 · Friends: 8.4"). If no friends have rated it, show "—". Beli-style: no minimum threshold, just show what exists. Requires fetching all followed users' user_books rows for a given book and averaging their scores. Build after taste-match (Day 8) since it shares the same friends-who-rated-this query pattern.
 - **Frictionless multi-book capture** (2026-05-30) — share-sheet target + paste-a-list parsing, so users can add every book from a social video / newsletter / tweet without leaving the source or typing titles one by one. Important: this is *capture*, not *content hosting* — the video stays on its platform; Verso removes the friction of getting those books onto your shelf.

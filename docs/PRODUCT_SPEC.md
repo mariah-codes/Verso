@@ -2,7 +2,7 @@
 
 *Verso V1 — what we're building and why.*
 
-**Last updated:** 2026-06-08
+**Last updated:** 2026-06-10
 
 ---
 
@@ -54,10 +54,11 @@ Five tabs.
 
 **"This week's picks"** — horizontal scroll of 3-5 book covers, refreshed weekly, surfaced from friends' shelves based on taste-match weighting. Tap → book detail → add to want-to-read.
 
-**"From your circle"** — vertical feed, infinite scroll. High-signal events only:
-- Friend ranked a finished book
+**"From your circle"** — vertical feed. Derived from followed users' shelves (no events table). Two event types:
+- Friend ranked a finished book (shows their score, or tier if below the score threshold)
 - Friend added to want-to-read
-- Friend's book cracked their top 10
+
+Cards are avatar-led (avatar → text → cover) for friend identity. Each card carries heart + comment (left) and a save bookmark (right) that adds the book to your want-to-read.
 
 Reactions inline (see below).
 
@@ -135,10 +136,12 @@ DNF is not shown here (own-profile-only, per the privacy model). Layout pending 
 
 ## Reactions and comments
 
-Three small outline icons with counts on each feed item:
-- **Flame outline** — "this is fire / I agree this is great"
-- **Smile outline** — "ha, love this / nice take"
-- **Comment bubble outline** — tap to expand the thread
+Each feed card carries two social reactions on the left and a personal save action on the right:
+- **Heart outline** — "I love this / I agree"
+- **Comment bubble outline** — tap to open the thread
+- **Save bookmark** (right) — adds the book to your want-to-read. Three states: outline (saveable), terracotta-filled (on your want-to-read, tap to remove), muted (already finished/reading/dnf — inactive). Counts are hidden when zero.
+
+Comments attach to a friend's **review** (their public note on a finished book), not to the bare ranking event — the authored take is the real unit of conversation (Letterboxd/Beli model). This is where the fun lives — friend banter on reviews, hot takes, sassy reactions. (See DECISION_LOG 2026-06-10.)
 
 Tapping the comment bubble expands the conversation inline (or modal). Comments are contextual to the specific event (e.g., "Sarah ranked Demon Copperhead at #2") — not generic book reviews. Comments are first-class in V1. This is where the fun lives — friend banter on rankings, hot takes, sassy reactions.
 
