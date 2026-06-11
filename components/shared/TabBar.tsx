@@ -17,11 +17,12 @@ const TABS = [
 
 export function TabBar() {
   const pathname = usePathname()
-  const { inputFocused, keyboardInset, standalone } = useKeyboard()
+  const { inputFocused, keyboardInset, coarsePointer } = useKeyboard()
 
-  // Hide while typing in the installed PWA (immediate, no float flash) or once a
-  // keyboard actually overlaps (covers mobile browser tabs); never on desktop.
-  const hideNav = inputFocused && (standalone || keyboardInset > 0)
+  // Hide while typing on any touch device (immediate, no float flash) or once a
+  // keyboard actually overlaps; never on desktop, where focusing a comment box
+  // shouldn't make the tab bar vanish.
+  const hideNav = inputFocused && (coarsePointer || keyboardInset > 0)
 
   // Publish the keyboard overlap app-wide so bottom content (e.g. the comment
   // composer) can clear it via CSS — see app/(app)/layout.tsx.

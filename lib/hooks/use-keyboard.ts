@@ -16,13 +16,16 @@ import { useEffect, useState } from "react"
 export function useKeyboard() {
   const [inputFocused, setInputFocused] = useState(false)
   const [keyboardInset, setKeyboardInset] = useState(0)
-  // Installed PWA (standalone display mode). Lets callers hide the nav the
-  // instant a field is focused on iOS without affecting a desktop browser tab,
-  // where focusing a comment box shouldn't make the tab bar vanish. Lazy init
-  // (not effect setState); the nav is never hidden at mount, so no hydration
-  // mismatch even though the server renders this false.
-  const [standalone] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(display-mode: standalone)").matches,
+  // Touch-primary device (phone/tablet) — i.e. one with a soft keyboard. This,
+  // not "standalone", is the reliable signal: `display-mode: standalone` is
+  // flaky on iOS, and the keyboard inset can read 0 in a standalone PWA (the
+  // viewport doesn't always shrink). A coarse pointer lets callers hide the nav
+  // the instant a field is focused on a phone, while never touching desktop
+  // (fine pointer), where focusing a comment box shouldn't vanish the tab bar.
+  // Lazy init (not effect setState); the nav is never hidden at mount, so the
+  // server-rendered `false` can't cause a hydration mismatch.
+  const [coarsePointer] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches,
   )
 
   useEffect(() => {
@@ -43,22 +46,29 @@ export function useKeyboard() {
     document.addEventListener("focusout", onFocusOut)
 
     const vv = window.visualViewport
+    let raf = 0
     const updateInset = () => {
       if (!vv) return
-      // Layout viewport bottom minus the visible viewport bottom = keyboard overlap.
-      setKeyboardInset(Math.max(0, window.innerHeight - vv.height - vv.offsetTop))
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() =>
+        // Keyboard height = layout viewport − visible viewport. Deliberately NOT
+        // minus offsetTop: offsetTop fluctuates during a scroll gesture, which
+        // would thrash this value (and the layout) mid-scroll. The keyboard's
+        // height only changes when it opens/closes, so listen to 'resize' ONLY,
+        // never 'scroll'.
+        setKeyboardInset(Math.max(0, window.innerHeight - vv.height)),
+      )
     }
     vv?.addEventListener("resize", updateInset)
-    vv?.addEventListener("scroll", updateInset)
     updateInset()
 
     return () => {
       document.removeEventListener("focusin", onFocusIn)
       document.removeEventListener("focusout", onFocusOut)
       vv?.removeEventListener("resize", updateInset)
-      vv?.removeEventListener("scroll", updateInset)
+      cancelAnimationFrame(raf)
     }
   }, [])
 
-  return { inputFocused, keyboardInset, standalone }
+  return { inputFocused, keyboardInset, coarsePointer }
 }
