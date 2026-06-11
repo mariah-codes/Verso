@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Image from "next/image"
-import { ChevronLeft, CheckCheck, BookOpen, Bookmark, BookX, CircleX } from "lucide-react"
+import { ChevronLeft, CheckCheck, BookOpen, Bookmark, BookX, CircleX, Eye, Lock } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { RankingFlow, type NewBookInfo } from "@/components/ranking/RankingFlow"
 import { ScoreDisplay } from "@/components/shared/ScoreDisplay"
@@ -19,6 +19,12 @@ import {
 import { TIER_LABELS } from "@/lib/ranking"
 import { GenrePicker } from "@/components/book/GenrePicker"
 import { StopReadingSheet } from "@/components/book/StopReadingSheet"
+import { OwnReview } from "@/components/book/OwnReview"
+import { FriendReviews } from "@/components/book/FriendReviews"
+import { NoteEditorSheet, type NoteKind } from "@/components/book/NoteEditorSheet"
+import { savePublicNote, savePrivateNote, fetchFriendReviews, type FriendReview } from "@/lib/reviews"
+import { fetchRankedHearts, setHeart, type HeartState } from "@/lib/reactions"
+import { fetchRankedCommentCounts } from "@/lib/comments"
 import { Toast, useToast } from "@/components/shared/Toast"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -38,6 +44,12 @@ interface UserBookData {
   score: number | null
   rankPosition: number | null
   genre: string | null
+  publicNote: string | null
+  privateNote: string | null
+  /** First-post timestamp of the public review (never re-bumped on edit) —
+   *  drives the review's relative time, agreeing with the feed. */
+  publicReviewedAt: string | null
+  publicEditedAt: string | null
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -108,12 +120,24 @@ export default function BookPage() {
   const [genreEditing, setGenreEditing] = useState(false)
   const [savingGenre, setSavingGenre]   = useState(false)
 
+  // Reviews — own note editor + friends' reviews (discovery surface)
+  const [editorKind, setEditorKind]       = useState<NoteKind | null>(null)
+  const [savingNote, setSavingNote]       = useState(false)
+  const [friendReviews, setFriendReviews] = useState<FriendReview[]>([])
+  const [reviewsLoading, setReviewsLoading] = useState(true)
+  // Heart state for this book's 'ranked' events, keyed by event-author id (mine
+  // + each friend reviewer's). One batched read backs every heart on the page.
+  const [hearts, setHearts] = useState<Map<string, HeartState>>(new Map())
+  // Comment counts for this book's 'ranked' events, keyed by event-author id —
+  // backs the review bubbles before a thread is expanded.
+  const [commentCounts, setCommentCounts] = useState<Map<string, number>>(new Map())
+
   // ── Data loading ────────────────────────────────────────────────────────────
 
   const refresh = useCallback(async (uid: string) => {
     const { data: ub } = await db
       .from("user_books")
-      .select("id, status, tier, score, rank_position, genre")
+      .select("id, status, tier, score, rank_position, genre, public_note, private_note, reviewed_at, edited_at")
       .eq("book_id", id)
       .eq("user_id", uid)
       .maybeSingle()
@@ -125,6 +149,10 @@ export default function BookPage() {
       score:        ub.score ?? null,
       rankPosition: ub.rank_position ?? null,
       genre:        ub.genre ?? null,
+      publicNote:   ub.public_note ?? null,
+      publicReviewedAt: ub.reviewed_at ?? null,
+      privateNote:  ub.private_note ?? null,
+      publicEditedAt: ub.edited_at ?? null,
     } : null)
   }, [id])
 
@@ -151,6 +179,17 @@ export default function BookPage() {
       if (user) {
         setUserId(user.id)
         await refresh(user.id)
+        // Friends' reviews — independent of my own status; load in the background
+        // so the page paints without waiting on it.
+        fetchFriendReviews(user.id, id)
+          .then(setFriendReviews)
+          .finally(() => setReviewsLoading(false))
+        // Hearts for every 'ranked' event on this book (mine + friends').
+        fetchRankedHearts(user.id, id).then(setHearts)
+        // Comment counts for every 'ranked' event on this book.
+        fetchRankedCommentCounts(id).then(setCommentCounts)
+      } else {
+        setReviewsLoading(false)
       }
 
       setLoading(false)
@@ -345,6 +384,86 @@ export default function BookPage() {
     setSavingGenre(false)
   }
 
+  /**
+   * Save (or clear) the public review / private note for my row. Empty text
+   * clears the column — that's how a review is deleted, no separate control.
+   * Optimistic: the zone updates immediately and reverts on error.
+   */
+  async function handleSaveNote(text: string) {
+    if (!userBook || !userId || editorKind === null || savingNote) return
+    const kind = editorKind
+    const trimmed = text.trim()
+    const prev = userBook
+
+    setSavingNote(true)
+    if (kind === "public") {
+      // Mirror savePublicNote's timestamp logic optimistically: editing an
+      // existing review (had text → still has text) sets the edited marker;
+      // a first post or a clear leaves/sets it null.
+      const wasReview = !!userBook.publicNote
+      const nowIso = new Date().toISOString()
+      setUserBook({
+        ...userBook,
+        publicNote: trimmed || null,
+        // First post stamps reviewed_at; an edit keeps it; clearing nulls it.
+        publicReviewedAt: trimmed ? (wasReview ? userBook.publicReviewedAt : nowIso) : null,
+        // An edit of an existing review sets the edited marker; first post/clear null.
+        publicEditedAt: trimmed ? (wasReview ? nowIso : null) : null,
+      })
+    } else {
+      setUserBook({ ...userBook, privateNote: trimmed || null })
+    }
+
+    const { error } = kind === "public"
+      ? await savePublicNote(userBook.userBookId, text)
+      : await savePrivateNote(userBook.userBookId, text)
+
+    setSavingNote(false)
+    if (error) {
+      setUserBook(prev)   // revert
+      showToast({ variant: "error", message: "Couldn’t save — try again" })
+      return
+    }
+
+    setEditorKind(null)
+    const label = kind === "public"
+      ? (trimmed ? "Review saved" : "Review removed")
+      : (trimmed ? "Note saved" : "Note removed")
+    showToast({ variant: "note", message: label, icon: kind === "public" ? Eye : Lock })
+  }
+
+  /**
+   * Toggle the viewer's heart on a 'ranked' event for this book, keyed by the
+   * event's author (subjectUserId — my own id for my review, the friend's id for
+   * theirs). Optimistic; reverts on error.
+   */
+  async function toggleHeart(subjectUserId: string) {
+    if (!userId || !book) return
+    const cur = hearts.get(subjectUserId) ?? { count: 0, reacted: false }
+    const next: HeartState = {
+      reacted: !cur.reacted,
+      count: cur.count + (cur.reacted ? -1 : 1),
+    }
+    setHearts((prev) => new Map(prev).set(subjectUserId, next))   // optimistic
+
+    const { error } = await setHeart({
+      reactorId: userId,
+      eventType: "ranked",
+      subjectUserId,
+      bookId: book.id,
+      react: next.reacted,
+    })
+    if (error) {
+      setHearts((prev) => new Map(prev).set(subjectUserId, cur))  // revert
+      showToast({ variant: "error", message: "Couldn’t update — try again" })
+    }
+  }
+
+  /** Keep a review's comment-count badge in sync with its open thread. */
+  function updateCommentCount(subjectUserId: string, count: number) {
+    setCommentCounts((prev) => new Map(prev).set(subjectUserId, count))
+  }
+
   async function handleRemove() {
     if (!userBook || !userId) return
     setRemoving(true)
@@ -413,7 +532,10 @@ export default function BookPage() {
           </button>
         </div>
 
-        <div className="px-5 pb-16 flex flex-col items-center gap-7">
+        {/* Main vertical stack — one SECTION gap (20px) governs every
+            section→section break; tighter INTRA spacing (8px) lives inside each
+            block. No per-element rhythm margins. */}
+        <div className="px-5 pb-16 flex flex-col items-center gap-5">
 
           {/* ── Cover ───────────────────────────────────────────────────────── */}
           <div className="relative w-[170px] aspect-[2/3] rounded-xl overflow-hidden shadow-lg bg-muted mt-1">
@@ -435,9 +557,17 @@ export default function BookPage() {
           {/* ── Score + tier + genre (per-user metadata) ────────────────────── */}
           {userBook && (
             <div className="w-full max-w-xs flex flex-col items-center gap-2">
-              {/* Score + tier · re-rank (finished only) */}
+              {/* Score + tier · re-rank (finished only).
+                  HERO-VERDICT WRAPPER — the one sanctioned exception to the
+                  "spacing comes from the parent gap, never per-element margins"
+                  rule, scoped to this block alone. The score's 8px gap to the
+                  tier line (INTRA) is set by this wrapper's gap-2; the -mt-3
+                  cancels 12px of the 20px SECTION gap above, leaving 8px to the
+                  author line so the score sits with equal air above and below —
+                  optically centered between author and tier. Genre (a sibling in
+                  the outer block) keeps its normal 8px gap below the tier. */}
               {isFinished && (
-                <>
+                <div className="flex flex-col items-center gap-2 -mt-3">
                   {userBook.score !== null && (
                     <ScoreDisplay score={userBook.score} className="text-5xl leading-none" />
                   )}
@@ -457,7 +587,7 @@ export default function BookPage() {
                       {reranking ? "Clearing…" : "Re-rank"}
                     </button>
                   </div>
-                </>
+                </div>
               )}
 
               {/* Genre — read state is plain text mirroring the tier line above
@@ -585,7 +715,7 @@ export default function BookPage() {
               control. Opens the bottom sheet; deliberately recedes so the
               status dropdown stays the primary action. */}
           {userBook?.status === "reading" && (
-            <div className="w-full max-w-xs -mt-1 flex justify-center">
+            <div className="w-full max-w-xs flex justify-center">
               <button
                 onClick={() => setStopOpen(true)}
                 className="inline-flex items-center gap-1.5 text-xs text-foreground/60 hover:text-foreground/80 underline underline-offset-4 transition-colors"
@@ -596,9 +726,41 @@ export default function BookPage() {
             </div>
           )}
 
+          {/* ── My review (finished only) ───────────────────────────────────── */}
+          {isFinished && userBook && (
+            <OwnReview
+              publicNote={userBook.publicNote}
+              privateNote={userBook.privateNote}
+              publicReviewedAt={userBook.publicReviewedAt}
+              publicEditedAt={userBook.publicEditedAt}
+              hearted={userId ? (hearts.get(userId)?.reacted ?? false) : false}
+              heartCount={userId ? (hearts.get(userId)?.count ?? 0) : 0}
+              onToggleHeart={() => { if (userId) toggleHeart(userId) }}
+              commentCount={userId ? (commentCounts.get(userId) ?? 0) : 0}
+              viewerId={userId ?? ""}
+              bookId={book.id}
+              onCommentCountChange={(n) => { if (userId) updateCommentCount(userId, n) }}
+              onEdit={setEditorKind}
+            />
+          )}
+
+          {/* ── Reviews from friends — discovery surface, shown on any book ──── */}
+          {userId && (
+            <FriendReviews
+              reviews={friendReviews}
+              loading={reviewsLoading}
+              hearts={hearts}
+              onToggleHeart={toggleHeart}
+              commentCounts={commentCounts}
+              onCommentCountChange={updateCommentCount}
+              viewerId={userId}
+              bookId={book.id}
+            />
+          )}
+
           {/* ── Remove from shelf ───────────────────────────────────────────── */}
           {userBook && (
-            <div className="w-full max-w-xs pt-4 border-t border-border/50">
+            <div className="w-full max-w-xs pt-5 border-t border-border/50">
               {!confirmRemove ? (
                 <button
                   onClick={() => {
@@ -670,6 +832,20 @@ export default function BookPage() {
         pending={stopping}
       />
 
+      {/* ── Note editor (public review / private thoughts) ────────────────────── */}
+      <NoteEditorSheet
+        open={editorKind !== null}
+        onOpenChange={(o) => { if (!o) setEditorKind(null) }}
+        kind={editorKind ?? "public"}
+        initialValue={
+          editorKind === "private"
+            ? (userBook?.privateNote ?? "")
+            : (userBook?.publicNote ?? "")
+        }
+        onSave={handleSaveNote}
+        saving={savingNote}
+      />
+
       {/* ── Toast ─────────────────────────────────────────────────────────────── */}
       <Toast payload={toast} onDismiss={dismissToast} />
     </>
@@ -696,7 +872,7 @@ function Skeleton({ onBack }: { onBack: () => void }) {
           <ChevronLeft className="size-5" /><span className="text-sm">Back</span>
         </button>
       </div>
-      <div className="px-5 pb-16 flex flex-col items-center gap-7">
+      <div className="px-5 pb-16 flex flex-col items-center gap-5">
         <div className="w-[170px] aspect-[2/3] rounded-xl bg-muted animate-pulse mt-1" />
         <div className="space-y-2 w-full max-w-xs flex flex-col items-center">
           <div className="h-7 w-48 rounded-lg bg-muted animate-pulse" />

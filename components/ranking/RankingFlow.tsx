@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { X } from "lucide-react"
 import {
   SCORE_DISPLAY_THRESHOLD,
@@ -46,6 +47,7 @@ type Phase = "tier" | "loading" | "comparing" | "saving" | "result" | "error"
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function RankingFlow({ book, userId, onClose, onComplete }: RankingFlowProps) {
+  const router = useRouter()
   const [phase, setPhase] = useState<Phase>("tier")
 
   // Tier selection
@@ -342,7 +344,15 @@ export function RankingFlow({ book, userId, onClose, onComplete }: RankingFlowPr
             score={newBookScore}
             overallRank={overallRank}
             userBookId={book.userBookId}
-            onDone={() => { onComplete(); onClose() }}
+            onDone={() => {
+              // De-burying: instead of an inline note prompt, Done lands on the
+              // book's detail page, where the empty review placeholders do the
+              // inviting. From book detail this is the same route (a no-op push);
+              // from Search / Profile it navigates there.
+              onComplete()
+              onClose()
+              router.push(`/book/${book.bookId}`)
+            }}
           />
         )}
 

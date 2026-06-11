@@ -1,0 +1,22 @@
+-- =============================================================================
+-- Split the review timestamp into first-post vs last-edit (review feature step B).
+--
+-- reviewed_at changes meaning: it is now the FIRST-POST timestamp — set once on
+-- the null/empty → non-empty transition, never overwritten on later edits, and
+-- reset to NULL when the review is cleared (so a future re-post counts fresh).
+-- This is what lets a review written weeks after finishing surface in the feed
+-- on post, and keeps later edits from re-bumping it.
+--
+-- edited_at (new) is the LAST-EDIT timestamp — set to now() on any public_note
+-- update where reviewed_at is already non-null (a real edit of an existing
+-- review), NULL while a review has never been edited.
+--
+-- Both are maintained by the app (lib/reviews.ts savePublicNote), mirroring how
+-- the app already manages finished_at / reviewed_at. No RLS changes.
+--
+-- Existing rows: reviewed_at currently holds the last-save time (close enough to
+-- a first-post stamp for the handful of pre-B reviews) and edited_at defaults to
+-- NULL — so they read as "posted, never edited", which is correct going forward.
+-- =============================================================================
+
+ALTER TABLE public.user_books ADD COLUMN edited_at timestamptz;

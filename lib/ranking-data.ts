@@ -321,15 +321,3 @@ export async function runSeedIfNeeded(
 
   return { seeded, error: null }
 }
-
-/** Saves the user's "what stayed with you" note. */
-export async function saveBookNote(
-  userBookId: string,
-  note: string,
-): Promise<{ error: string | null }> {
-  const { error } = await db
-    .from("user_books")
-    .update({ note })
-    .eq("id", userBookId)
-  return { error: error?.message ?? null }
-}

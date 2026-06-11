@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       books: {
@@ -250,11 +275,14 @@ export type Database = {
         Row: {
           added_at: string
           book_id: string
+          edited_at: string | null
           finished_at: string | null
           genre: string | null
           id: string
-          note: string | null
+          private_note: string | null
+          public_note: string | null
           rank_position: number | null
+          reviewed_at: string | null
           score: number | null
           status: Database["public"]["Enums"]["book_status"]
           tier: Database["public"]["Enums"]["book_tier"] | null
@@ -265,11 +293,14 @@ export type Database = {
         Insert: {
           added_at?: string
           book_id: string
+          edited_at?: string | null
           finished_at?: string | null
           genre?: string | null
           id?: string
-          note?: string | null
+          private_note?: string | null
+          public_note?: string | null
           rank_position?: number | null
+          reviewed_at?: string | null
           score?: number | null
           status: Database["public"]["Enums"]["book_status"]
           tier?: Database["public"]["Enums"]["book_tier"] | null
@@ -280,11 +311,14 @@ export type Database = {
         Update: {
           added_at?: string
           book_id?: string
+          edited_at?: string | null
           finished_at?: string | null
           genre?: string | null
           id?: string
-          note?: string | null
+          private_note?: string | null
+          public_note?: string | null
           rank_position?: number | null
+          reviewed_at?: string | null
           score?: number | null
           status?: Database["public"]["Enums"]["book_status"]
           tier?: Database["public"]["Enums"]["book_tier"] | null
@@ -316,6 +350,7 @@ export type Database = {
           display_name: string
           id: string
           photo_url: string | null
+          username: string
         }
         Insert: {
           bio?: string | null
@@ -323,6 +358,7 @@ export type Database = {
           display_name: string
           id: string
           photo_url?: string | null
+          username: string
         }
         Update: {
           bio?: string | null
@@ -330,6 +366,7 @@ export type Database = {
           display_name?: string
           id?: string
           photo_url?: string | null
+          username?: string
         }
         Relationships: []
       }
@@ -373,17 +410,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_username: {
+        Args: { p_first: string; p_last: string }
+        Returns: string
+      }
       shift_rank_positions: {
         Args: { p_from_position: number; p_tier: string; p_user_id: string }
         Returns: undefined
       }
+      username_reserved: { Args: { p_username: string }; Returns: boolean }
+      username_taken: { Args: { p_username: string }; Returns: boolean }
     }
     Enums: {
       book_status: "want_to_read" | "reading" | "finished" | "dnf"
       book_tier: "loved" | "liked" | "fine"
       book_visibility: "visible" | "private"
       feed_event_type: "ranked" | "want_to_read" | "top_10_change"
-      reaction_type: "flame" | "smile"
+      reaction_type: "heart" | "smile"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -509,13 +552,16 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       book_status: ["want_to_read", "reading", "finished", "dnf"],
       book_tier: ["loved", "liked", "fine"],
       book_visibility: ["visible", "private"],
       feed_event_type: ["ranked", "want_to_read", "top_10_change"],
-      reaction_type: ["flame", "smile"],
+      reaction_type: ["heart", "smile"],
     },
   },
 } as const

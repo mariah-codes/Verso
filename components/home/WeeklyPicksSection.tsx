@@ -63,7 +63,8 @@ function Header() {
       >
         This week’s picks
       </h2>
-      <p className="text-sm text-foreground/45 mt-0.5">From friends who share your taste</p>
+      {/* Supporting label tier (/55) — matches the feed's "reviewed" verb. */}
+      <p className="text-sm text-foreground/55 mt-0.5">From friends who share your taste</p>
     </div>
   )
 }
@@ -120,7 +121,8 @@ function PickCard({ pick }: { pick: EnrichedPick }) {
           {pick.title}
         </p>
       </Link>
-      <p className="mt-1 text-[11px] italic text-foreground/45 leading-snug px-0.5">
+      {/* Meta tier (/40) — same weight as the feed's timestamp & counts. */}
+      <p className="mt-1 text-[11px] italic text-foreground/40 leading-snug px-0.5">
         {provenanceCaption(pick)}
       </p>
     </div>

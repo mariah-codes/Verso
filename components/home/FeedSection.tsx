@@ -6,9 +6,22 @@ import { BookOpen, Bookmark, Heart, MessageCircle, Users } from "lucide-react"
 import { TIER_LABELS, type Tier } from "@/lib/ranking"
 import { saveToWantToRead, removeFromWantToRead, type BookStatus } from "@/lib/books"
 import { formatRelativeTime, type FeedEvent } from "@/lib/feed"
+import { setHeart } from "@/lib/reactions"
+import { CommentThread } from "@/components/shared/CommentThread"
 import { Avatar } from "@/components/shared/Avatar"
 import { ScoreDisplay } from "@/components/shared/ScoreDisplay"
 import { Toast, useToast, type ToastPayload } from "@/components/shared/Toast"
+
+/** Shared treatment for the three action-row icon buttons (heart, comment,
+ *  bookmark) so they read as identical bare icon-buttons: no UA chrome, no
+ *  border/bg/padding, no outline. A keyboard focus ring is kept for a11y. */
+const ICON_BTN =
+  "inline-flex items-center appearance-none border-0 bg-transparent p-0 rounded outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
+
+/** Prevent a pointer tap from leaving focus on the button (which would persist
+ *  the focus ring — visible only on the comment button, the one that expands
+ *  content on tap). Keeps onClick and keyboard Tab focus working. */
+const preventFocusOnTap = (e: React.MouseEvent) => e.preventDefault()
 
 /** Inactive (already finished/reading/dnf) save-bookmark fill — a quiet warm
  *  putty neutral, light enough that the eye skips past it (only the terracotta
@@ -76,11 +89,44 @@ function FeedItem({
   showToast: (p: ToastPayload) => void
 }) {
   const { actor, book, type, timestamp, score, tier } = event
-  const action = type === "ranked" ? "ranked" : "wants to read"
+  const action =
+    type === "reviewed" ? "reviewed"
+    : type === "ranked" ? "ranked"
+    : "wants to read"
+  const showVerdict = type === "ranked" || type === "reviewed"
 
   // Live status for this book on the viewer's shelf — drives the save icon.
   const [status, setStatus] = useState<BookStatus | null>(event.viewerStatus)
   const [busy, setBusy] = useState(false)
+
+  // Heart state — optimistic, seeded from the feed query.
+  const [hearted, setHearted] = useState(event.viewerHasReacted)
+  const [heartCount, setHeartCount] = useState(event.reactionCount)
+
+  // Comment thread — count seeded from the feed query; the thread keeps it live.
+  const [commentCount, setCommentCount] = useState(event.commentCount)
+  const [commentsOpen, setCommentsOpen] = useState(false)
+
+  async function handleHeartTap() {
+    if (!userId) return
+    const next = !hearted
+    // Optimistic toggle.
+    setHearted(next)
+    setHeartCount((c) => c + (next ? 1 : -1))
+    const { error } = await setHeart({
+      reactorId: userId,
+      eventType: event.reactionEventType,
+      subjectUserId: actor.id,
+      bookId: book.id,
+      react: next,
+    })
+    if (error) {
+      // Revert.
+      setHearted(!next)
+      setHeartCount((c) => c + (next ? -1 : 1))
+      showToast({ variant: "error", message: "Couldn’t update — try again" })
+    }
+  }
 
   const isSaved = status === "want_to_read"
   const isLocked = status === "finished" || status === "reading" || status === "dnf"
@@ -137,7 +183,7 @@ function FeedItem({
           <p className="text-sm leading-snug">
             <span className="font-semibold text-foreground">{firstName(actor.displayName)}</span>{" "}
             <span className="text-foreground/55">{action}</span>
-            <span className="text-foreground/35"> · {formatRelativeTime(timestamp)}</span>
+            <span className="text-foreground/40"> · {formatRelativeTime(timestamp)}</span>
           </p>
 
           {/* Line 2 — title (serif) */}
@@ -148,10 +194,10 @@ function FeedItem({
             {book.title}
           </p>
 
-          {/* Line 3 — ranked only. Score is the headline verdict — co-equal with
-              the title (~16px). The tier fallback (no score yet) is a quiet,
+          {/* Line 3 — ranked & reviewed. Score is the headline verdict — co-equal
+              with the title (~16px). The tier fallback (no score yet) is a quiet,
               subordinate footnote (~12px, tertiary). */}
-          {type === "ranked" && (
+          {showVerdict && (
             score !== null ? (
               <div className="mt-1.5">
                 <ScoreDisplay score={score} className="text-base" />
@@ -176,35 +222,69 @@ function FeedItem({
         </div>
       </div>
 
+      {/* Review excerpt — review cards only. The public_note inline, capped at ~3
+          lines; the full text lives on the book page. */}
+      {type === "reviewed" && event.publicNote && (
+        <p className="mt-3 text-sm leading-relaxed text-foreground/70 whitespace-pre-line line-clamp-3">
+          {event.publicNote}
+        </p>
+      )}
+
       {/* Action row — social (heart/comment) left, save right.
           Heart/comment are display-only this pass; save is the wired toggle.
           mt-3.5 / pt-3.5 keep the divider symmetric (14px above and below), and the
           14px below the icons (card py-3.5) matches — even rhythm top to bottom. */}
       <div className="mt-3.5 pt-3.5 border-t border-border/60 flex items-center justify-between">
-        <div className="flex items-center gap-5 text-foreground/45">
-          <span className="inline-flex items-center gap-1.5">
-            <Heart className="size-[18px]" strokeWidth={1.75} />
-            {event.reactionCount > 0 && (
-              <span className="text-xs tabular-nums">{event.reactionCount}</span>
-            )}
-          </span>
-          <span className="inline-flex items-center gap-1.5">
+        {/* Meta tier (/40) — heart/comment icons + counts, same weight as the
+            timestamp. The filled (reacted) heart overrides with terracotta. */}
+        <div className="flex items-center gap-5 text-foreground/40">
+          <button
+            type="button"
+            onClick={handleHeartTap}
+            onMouseDown={preventFocusOnTap}
+            disabled={!userId}
+            aria-label={hearted ? "Remove heart" : "Heart"}
+            aria-pressed={hearted}
+            className={`${ICON_BTN} gap-1.5`}
+          >
+            <Heart
+              className="size-[18px]"
+              strokeWidth={1.75}
+              style={{
+                color: hearted ? "#9C4A2F" : undefined,
+                fill: hearted ? "#9C4A2F" : "none",
+              }}
+            />
+            {heartCount > 0 && <span className="text-xs tabular-nums">{heartCount}</span>}
+          </button>
+          {/* Comment bubble — taps to expand the thread inline. Every card type
+              (review, ranked, want-to-read) is commentable; no dead bubbles. */}
+          <button
+            type="button"
+            onClick={() => setCommentsOpen((o) => !o)}
+            onMouseDown={preventFocusOnTap}
+            aria-label="Comments"
+            aria-expanded={commentsOpen}
+            className={`${ICON_BTN} gap-1.5`}
+          >
             <MessageCircle className="size-[18px]" strokeWidth={1.75} />
-            {event.commentCount > 0 && (
-              <span className="text-xs tabular-nums">{event.commentCount}</span>
+            {commentCount > 0 && (
+              <span className="text-xs tabular-nums">{commentCount}</span>
             )}
-          </span>
+          </button>
         </div>
 
         <button
+          type="button"
           onClick={handleSaveTap}
+          onMouseDown={preventFocusOnTap}
           disabled={busy}
           aria-label={
             isSaved ? "Remove from want to read"
             : isLocked ? `Already on your shelf (${status})`
             : "Save to want to read"
           }
-          className="inline-flex items-center transition-opacity hover:opacity-80"
+          className={ICON_BTN}
         >
           {/* Terracotta = live save control (outline = saveable, filled = saved);
               a quiet warm putty fill = inactive for this book. Terracotta-vs-putty
@@ -219,6 +299,21 @@ function FeedItem({
           />
         </button>
       </div>
+
+      {/* Comment thread — expands inline within the card. Same records as this
+          review's book-detail thread (both event_type='ranked'). No rule below
+          the action row — comments flow under it on whitespace alone. */}
+      {commentsOpen && (
+        <div className="mt-4">
+          <CommentThread
+            eventType={event.reactionEventType}
+            subjectUserId={actor.id}
+            bookId={book.id}
+            viewerId={userId}
+            onCountChange={setCommentCount}
+          />
+        </div>
+      )}
     </article>
   )
 }

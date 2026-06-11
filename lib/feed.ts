@@ -10,6 +10,7 @@
 
 import { supabase } from "./supabase"
 import type { BookStatus } from "./books"
+import type { ReactionEventType } from "./reactions"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any
@@ -19,7 +20,10 @@ const FEED_LIMIT = 30
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type FeedEventType = "ranked" | "want_to_read"
+// "reviewed" is a finished+ranked row that ALSO has a public_note — it upgrades
+// the ranked event in place (same row, not a second event), sorts by reviewed_at,
+// and renders the review card. "ranked" is the same row without a public_note.
+export type FeedEventType = "ranked" | "want_to_read" | "reviewed"
 
 export interface FeedActor {
   id: string
@@ -42,12 +46,19 @@ export interface FeedEvent {
   type: FeedEventType
   actor: FeedActor
   book: FeedBook
-  /** ISO timestamp: finished_at (ranked) or added_at (want_to_read). */
+  /** ISO timestamp the event sorts/displays by: reviewed_at (reviewed),
+   *  finished_at (ranked), or added_at (want_to_read). */
   timestamp: string
-  /** Ranked only: frozen 0–10 score (null below the 10-book threshold). */
+  /** Ranked/reviewed: frozen 0–10 score (null below the 10-book threshold). */
   score: number | null
-  /** Ranked only: DB tier ('loved' | 'liked' | 'fine'). */
+  /** Ranked/reviewed: DB tier ('loved' | 'liked' | 'fine'). */
   tier: string | null
+  /** Reviewed only: the public review text rendered inline on the card. */
+  publicNote: string | null
+  /** The event_type a heart keys on: finished-book events (ranked + reviewed)
+   *  both use 'ranked'; want-to-read uses 'want_to_read'. Distinct from `type`,
+   *  which carries the 'reviewed' display flavor. */
+  reactionEventType: ReactionEventType
   reactionCount: number
   commentCount: number
   /** Whether the signed-in user has reacted — for wiring interactivity later. */
@@ -79,8 +90,11 @@ export function formatRelativeTime(iso: string, now: Date = new Date()): string 
 
 // ── Query ─────────────────────────────────────────────────────────────────────
 
+// public_note + reviewed_at drive the review upgrade; private_note is NEVER
+// selected here (RLS is row-level; app-level discipline keeps it secret).
 const EVENT_SELECT = `
   id, status, tier, rank_position, score, finished_at, added_at,
+  public_note, reviewed_at,
   books ( id, title, author, cover_url ),
   actor:user_id ( id, display_name, username, photo_url )
 ` as const
@@ -100,9 +114,15 @@ export async function getFeed(userId: string): Promise<FeedEvent[]> {
   const followedIds = ((follows ?? []) as { followed_id: string }[]).map((f) => f.followed_id)
   if (followedIds.length === 0) return []
 
-  // 2. Events — two ordered queries (one per type) so each is recency-biased
-  //    independently, then merged. Visible only; ranked = finished + ranked.
-  const [finishedRes, wantRes] = await Promise.all([
+  // 2. Events — ordered queries (recency-biased per stream) then merged. Visible
+  //    only. The finished side runs TWICE: once by finished_at (the ranked
+  //    stream) and once by reviewed_at restricted to reviewed rows — the latter
+  //    catches reviews posted long after the book was finished, which the
+  //    finished_at ordering would push past the limit window. The two finished
+  //    streams overlap on reviewed-recently-finished rows, so they're deduped by
+  //    user_books id below; each row becomes ONE event (a review if it has a
+  //    public_note, else a plain ranked card — never both).
+  const [rankedRes, reviewRes, wantRes] = await Promise.all([
     db.from("user_books").select(EVENT_SELECT)
       .in("user_id", followedIds)
       .eq("visibility", "visible")
@@ -113,18 +133,28 @@ export async function getFeed(userId: string): Promise<FeedEvent[]> {
     db.from("user_books").select(EVENT_SELECT)
       .in("user_id", followedIds)
       .eq("visibility", "visible")
+      .eq("status", "finished")
+      .not("rank_position", "is", null)
+      .not("public_note", "is", null)
+      .order("reviewed_at", { ascending: false, nullsFirst: false })
+      .limit(FEED_LIMIT * 2),
+    db.from("user_books").select(EVENT_SELECT)
+      .in("user_id", followedIds)
+      .eq("visibility", "visible")
       .eq("status", "want_to_read")
       .order("added_at", { ascending: false })
       .limit(FEED_LIMIT * 2),
   ])
 
-  if (finishedRes.error) console.error("[feed] finished:", finishedRes.error.message)
+  if (rankedRes.error) console.error("[feed] ranked:", rankedRes.error.message)
+  if (reviewRes.error) console.error("[feed] reviewed:", reviewRes.error.message)
   if (wantRes.error) console.error("[feed] want_to_read:", wantRes.error.message)
 
   const events: FeedEvent[] = []
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const toEvent = (r: any, type: FeedEventType, timestamp: string | null): FeedEvent | null => {
     if (!r.books || !r.actor || !timestamp) return null
+    const isFinished = type === "ranked" || type === "reviewed"
     return {
       id: `${type}:${r.actor.id}:${r.books.id}`,
       type,
@@ -141,8 +171,10 @@ export async function getFeed(userId: string): Promise<FeedEvent[]> {
         author: r.books.author,
         coverUrl: r.books.cover_url || null,
       },
-      score: type === "ranked" ? (r.score ?? null) : null,
-      tier: type === "ranked" ? (r.tier ?? null) : null,
+      score: isFinished ? (r.score ?? null) : null,
+      tier: isFinished ? (r.tier ?? null) : null,
+      publicNote: type === "reviewed" ? (r.public_note ?? null) : null,
+      reactionEventType: type === "want_to_read" ? "want_to_read" : "ranked",
       reactionCount: 0,
       commentCount: 0,
       viewerHasReacted: false,
@@ -150,11 +182,24 @@ export async function getFeed(userId: string): Promise<FeedEvent[]> {
     }
   }
 
+  // Merge & dedup the two finished streams by user_books id. A row with a
+  // public_note becomes a review event sorted by reviewed_at (first-post); a row
+  // without one stays a ranked event sorted by finished_at. A later edit only
+  // touches edited_at, so reviewed_at — and thus feed position — never moves.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  for (const r of (finishedRes.data ?? []) as any[]) {
-    const e = toEvent(r, "ranked", r.finished_at)
+  const finishedRows = new Map<string, any>()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  for (const r of [...(rankedRes.data ?? []), ...(reviewRes.data ?? [])] as any[]) {
+    finishedRows.set(r.id, r)
+  }
+  for (const r of finishedRows.values()) {
+    const isReview = !!r.public_note
+    const e = isReview
+      ? toEvent(r, "reviewed", r.reviewed_at ?? r.finished_at)
+      : toEvent(r, "ranked", r.finished_at)
     if (e) events.push(e)
   }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const r of (wantRes.data ?? []) as any[]) {
     const e = toEvent(r, "want_to_read", r.added_at)
@@ -209,9 +254,12 @@ export async function getFeed(userId: string): Promise<FeedEvent[]> {
   }
 
   for (const e of top) {
-    e.reactionCount = reactionCounts.get(e.id) ?? 0
-    e.commentCount = commentCounts.get(e.id) ?? 0
-    e.viewerHasReacted = viewerReacted.has(e.id)
+    // Hearts/comments key on the reaction event_type ('ranked' for reviewed
+    // cards too), NOT the display id (which carries the 'reviewed' flavor).
+    const rkey = eventKey(e.reactionEventType, e.actor.id, e.book.id)
+    e.reactionCount = reactionCounts.get(rkey) ?? 0
+    e.commentCount = commentCounts.get(rkey) ?? 0
+    e.viewerHasReacted = viewerReacted.has(rkey)
     e.viewerStatus = myStatusByBook.get(e.book.id) ?? null
   }
 

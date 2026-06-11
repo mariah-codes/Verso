@@ -1,6 +1,6 @@
 import Link from "next/link"
 import Image from "next/image"
-import { BookOpen } from "lucide-react"
+import { BookOpen, AlignLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ScoreDisplay } from "@/components/shared/ScoreDisplay"
 import type { ShelfBook } from "@/lib/profile"
@@ -54,13 +54,22 @@ export function ShelfBookCard({
 
       {/* Metadata */}
       <div className="space-y-0.5 px-0.5">
-        {/* Title + score on one row: title truncates, score stays put */}
-        <div className="flex items-baseline justify-between gap-1.5">
-          <p className="text-xs font-medium text-foreground leading-snug truncate min-w-0">
+        {/* Title + score on one row: title (flex-1) absorbs all width and is the
+            only element that truncates; the score + review glyph are grouped
+            shrink-0 on the right. The AlignLeft glyph sits right after the score
+            — muted terracotta so it reads as "your writing here", not a grey
+            system icon. */}
+        <div className="flex items-baseline justify-between gap-1">
+          <p className="flex-1 min-w-0 text-xs font-medium text-foreground leading-snug truncate">
             {book.title}
           </p>
-          {book.status === "finished" && book.score !== null && (
-            <ScoreDisplay score={book.score} className="text-sm shrink-0" />
+          {book.status === "finished" && (book.score !== null || book.hasPublicNote) && (
+            <span className="flex items-center gap-[3px] shrink-0">
+              {book.score !== null && <ScoreDisplay score={book.score} className="text-sm shrink-0" />}
+              {book.hasPublicNote && (
+                <AlignLeft className="size-[10px] shrink-0" style={{ color: "#B0623F" }} />
+              )}
+            </span>
           )}
         </div>
         <p className="text-xs text-foreground/55 line-clamp-1">

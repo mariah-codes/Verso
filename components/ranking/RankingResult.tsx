@@ -1,10 +1,9 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import { BookOpen } from "lucide-react"
 import { SCORE_DISPLAY_THRESHOLD, TIER_LABELS, type Tier } from "@/lib/ranking"
-import { saveBookNote } from "@/lib/ranking-data"
 import { fetchUserBookGenre, saveBookGenre } from "@/lib/books"
 import { ScoreDisplay } from "@/components/shared/ScoreDisplay"
 import { GenrePicker } from "@/components/book/GenrePicker"
@@ -39,18 +38,6 @@ export function RankingResult({
   }, [])
 
   const isAboveThreshold = finishedCount >= SCORE_DISPLAY_THRESHOLD
-  const isTop10 = overallRank !== null && overallRank <= 10
-
-  // Note prompt state
-  const [showNote, setShowNote] = useState(false)
-  const [note, setNote] = useState("")
-  const [noteSaving, setNoteSaving] = useState(false)
-  const [noteSaved, setNoteSaved] = useState(false)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-
-  useEffect(() => {
-    if (showNote) textareaRef.current?.focus()
-  }, [showNote])
 
   // Genre — optional, skippable step. Only offered when this row has no genre
   // yet (a re-rank of an already-tagged book skips it; edit lives on book detail).
@@ -74,15 +61,6 @@ export function RankingResult({
     const { error } = await saveBookGenre(userBookId, value)
     if (error) setGenre(null)  // revert so the user can retry
     setSavingGenre(false)
-  }
-
-  async function handleSaveNote() {
-    if (!note.trim()) { setShowNote(false); return }
-    setNoteSaving(true)
-    await saveBookNote(userBookId, note.trim())
-    setNoteSaving(false)
-    setNoteSaved(true)
-    setTimeout(() => setShowNote(false), 800)
   }
 
   const showScore = isAboveThreshold && score !== null
@@ -131,55 +109,6 @@ export function RankingResult({
           )}
         </div>
       </div>
-
-      {/* Top-10 note prompt */}
-      {isTop10 && !noteSaved && (
-        <div
-          className="w-full transition-all duration-300 ease-out"
-          style={{ opacity: visible ? 1 : 0 }}
-        >
-          {!showNote ? (
-            <button
-              onClick={() => setShowNote(true)}
-              className="w-full rounded-xl border border-dashed border-[#9C4A2F]/30 px-4 py-3 text-center"
-            >
-              <p className="text-xs font-semibold text-[#9C4A2F] tracking-wide">
-                This cracked your top 10
-              </p>
-              <p className="text-xs text-foreground/40 mt-0.5">
-                What stayed with you? (optional)
-              </p>
-            </button>
-          ) : (
-            <div className="space-y-2">
-              <textarea
-                ref={textareaRef}
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="A line or two about what made it special…"
-                rows={3}
-                className="w-full rounded-xl border border-input bg-muted/50 px-3 py-2.5 text-sm text-foreground placeholder:text-foreground/30 outline-none focus:border-ring resize-none"
-              />
-              <div className="flex gap-2">
-                <button
-                  onClick={handleSaveNote}
-                  disabled={noteSaving}
-                  className="flex-1 rounded-xl py-2.5 text-sm font-medium text-white disabled:opacity-50 transition-colors"
-                  style={{ backgroundColor: "#9C4A2F" }}
-                >
-                  {noteSaving ? "Saving…" : noteSaved ? "Saved ✓" : "Save note"}
-                </button>
-                <button
-                  onClick={() => setShowNote(false)}
-                  className="px-4 rounded-xl py-2.5 text-sm text-foreground/40 hover:text-foreground transition-colors"
-                >
-                  Skip
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Genre — optional, skippable. Only shown when this book is untagged for
           this user. Selecting saves immediately; the reveal stays the payoff and

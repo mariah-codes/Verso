@@ -30,6 +30,9 @@ export interface ShelfBook {
   score: number | null
   addedAt: string
   finishedAt: string | null
+  /** Whether this row carries a public review — drives the shelf review glyph.
+   *  public_note is public, so this is safe to surface on a friend's shelf too. */
+  hasPublicNote: boolean
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -48,10 +51,13 @@ function rowToShelfBook(row: any): ShelfBook {
     score: row.score ?? null,
     addedAt: row.added_at,
     finishedAt: row.finished_at ?? null,
+    hasPublicNote: !!row.public_note,
   }
 }
 
-// The joined select shape used by every shelf query
+// The joined select shape used by every shelf query. public_note is fetched as a
+// boolean-ish presence flag only (never private_note — that stays owner-private
+// and is irrelevant to any shelf card).
 const SHELF_SELECT = `
   id,
   status,
@@ -60,6 +66,7 @@ const SHELF_SELECT = `
   score,
   added_at,
   finished_at,
+  public_note,
   books (
     id,
     title,
