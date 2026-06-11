@@ -55,3 +55,4 @@ next-env.d.ts
 
 # PRIVATE DOCS (anything in this folder stays local, never on GitHub)
 docs/private/
+/.claude

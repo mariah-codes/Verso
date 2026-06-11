@@ -186,6 +186,10 @@ export function CommentThread({
             placeholder="Add a comment…"
             maxLength={1000}
             disabled={posting}
+            // scroll-margin-bottom carries the keyboard inset so when the field
+            // is scrolled into view it rests just above the keyboard, not behind
+            // it (the page has room to scroll — see app/(app)/layout.tsx).
+            style={{ scrollMarginBottom: "calc(var(--keyboard-inset, 0px) + 0.75rem)" }}
             className="flex-1 min-w-0 rounded-full border border-input bg-muted/50 px-3.5 py-2 text-[14px] text-foreground placeholder:text-foreground/30 outline-none focus:border-ring disabled:opacity-50"
           />
           <button

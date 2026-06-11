@@ -25,6 +25,9 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  // Required for env(safe-area-inset-*) to report real values (home-bar inset)
+  // in the installed standalone PWA — without it the insets are always 0.
+  viewportFit: "cover",
   themeColor: "#FAF8F4",
 }
 

@@ -2,7 +2,10 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useEffect } from "react"
 import { Home, Users, Search, LibraryBig, User } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { useKeyboard } from "@/lib/hooks/use-keyboard"
 
 const TABS = [
   { href: "/home",    label: "Home",    Icon: Home       },
@@ -14,10 +17,29 @@ const TABS = [
 
 export function TabBar() {
   const pathname = usePathname()
+  const { inputFocused, keyboardInset, standalone } = useKeyboard()
+
+  // Hide while typing in the installed PWA (immediate, no float flash) or once a
+  // keyboard actually overlaps (covers mobile browser tabs); never on desktop.
+  const hideNav = inputFocused && (standalone || keyboardInset > 0)
+
+  // Publish the keyboard overlap app-wide so bottom content (e.g. the comment
+  // composer) can clear it via CSS — see app/(app)/layout.tsx.
+  useEffect(() => {
+    document.documentElement.style.setProperty("--keyboard-inset", `${keyboardInset}px`)
+  }, [keyboardInset])
 
   return (
     <nav
-      className="fixed bottom-0 inset-x-0 z-40 bg-background/95 backdrop-blur-sm border-t border-border"
+      className={cn(
+        "fixed bottom-0 inset-x-0 z-40 bg-background/95 backdrop-blur-sm border-t border-border",
+        // Hide entirely while typing: in a standalone PWA a fixed bottom nav
+        // otherwise floats above the keyboard. display:none also removes its
+        // safe-area padding, so it can't double-count with the keyboard.
+        hideNav && "hidden",
+      )}
+      // Real home-bar inset when shown (needs viewport-fit=cover; see app/layout).
+      style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       aria-label="Main navigation"
     >
       <div className="flex">
@@ -45,8 +67,6 @@ export function TabBar() {
           )
         })}
       </div>
-      {/* iOS home-indicator safe area */}
-      <div className="h-safe-area-inset-bottom" />
     </nav>
   )
 }
