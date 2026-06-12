@@ -1,0 +1,410 @@
+[
+  {
+    "id": "normal-people",
+    "title": "Normal People",
+    "author": "Sally Rooney",
+    "category": "literary",
+    "coverId": 8794265,
+    "olid": "OL20150260W"
+  },
+  {
+    "id": "atomic-habits",
+    "title": "Atomic Habits",
+    "author": "James Clear",
+    "category": "nonfiction",
+    "coverId": 12539702,
+    "olid": "OL17930368W"
+  },
+  {
+    "id": "everything-i-know-about-love",
+    "title": "Everything I Know About Love",
+    "author": "Dolly Alderton",
+    "category": "contemporary",
+    "coverId": 9302180,
+    "olid": "OL20654212W"
+  },
+  {
+    "id": "dune-herbert",
+    "title": "Dune",
+    "author": "Frank Herbert",
+    "category": "genre",
+    "olid": "OL893415W",
+    "coverId": 14636170
+  },
+  {
+    "id": "crying-in-h-mart",
+    "title": "Crying in H Mart",
+    "author": "Michelle Zauner",
+    "category": "nonfiction",
+    "coverId": 10462708,
+    "olid": "OL22448002W"
+  },
+  {
+    "id": "tomorrow-and-tomorrow",
+    "title": "Tomorrow, and Tomorrow, and Tomorrow",
+    "author": "Gabrielle Zevin",
+    "category": "literary",
+    "coverId": 14393020,
+    "olid": "OL26004554W"
+  },
+  {
+    "id": "sapiens",
+    "title": "Sapiens",
+    "author": "Yuval Noah Harari",
+    "category": "nonfiction",
+    "coverId": 8634250,
+    "olid": "OL17075811W"
+  },
+  {
+    "id": "evelyn-hugo",
+    "title": "The Seven Husbands of Evelyn Hugo",
+    "author": "Taylor Jenkins Reid",
+    "category": "contemporary",
+    "coverId": 8354226,
+    "olid": "OL18203673W"
+  },
+  {
+    "id": "project-hail-mary",
+    "title": "Project Hail Mary",
+    "author": "Andy Weir",
+    "category": "genre",
+    "coverId": 11200092,
+    "olid": "OL21745884W"
+  },
+  {
+    "id": "the-secret-history",
+    "title": "The Secret History",
+    "author": "Donna Tartt",
+    "category": "literary",
+    "coverId": 744854,
+    "olid": "OL4321141W"
+  },
+  {
+    "id": "atlas-shrugged",
+    "title": "Atlas Shrugged",
+    "author": "Ayn Rand",
+    "category": "classic",
+    "olid": "OL731644W",
+    "coverId": 14826001
+  },
+  {
+    "id": "gone-girl",
+    "title": "Gone Girl",
+    "author": "Gillian Flynn",
+    "category": "genre",
+    "coverId": 12498395,
+    "olid": "OL16239762W"
+  },
+  {
+    "id": "where-the-crawdads-sing",
+    "title": "Where the Crawdads Sing",
+    "author": "Delia Owens",
+    "category": "literary",
+    "coverId": 8362947,
+    "olid": "OL18766691W"
+  },
+  {
+    "id": "educated",
+    "title": "Educated",
+    "author": "Tara Westover",
+    "category": "nonfiction",
+    "coverId": 8314077,
+    "olid": "OL18139176W"
+  },
+  {
+    "id": "a-little-life",
+    "title": "A Little Life",
+    "author": "Hanya Yanagihara",
+    "category": "literary",
+    "coverId": 12065783,
+    "olid": "OL17370186W"
+  },
+  {
+    "id": "becoming",
+    "title": "Becoming",
+    "author": "Michelle Obama",
+    "category": "nonfiction",
+    "coverId": 8824664,
+    "olid": "OL17930367W"
+  },
+  {
+    "id": "circe",
+    "title": "Circe",
+    "author": "Madeline Miller",
+    "category": "literary",
+    "coverId": 8739376,
+    "olid": "OL18012166W"
+  },
+  {
+    "id": "quiet",
+    "title": "Quiet",
+    "author": "Susan Cain",
+    "category": "nonfiction",
+    "coverId": 7079753,
+    "olid": "OL16484595W"
+  },
+  {
+    "id": "pachinko",
+    "title": "Pachinko",
+    "author": "Min Jin Lee",
+    "category": "literary",
+    "coverId": 8044605,
+    "olid": "OL17762217W"
+  },
+  {
+    "id": "born-a-crime",
+    "title": "Born a Crime",
+    "author": "Trevor Noah",
+    "category": "nonfiction",
+    "coverId": 8294078,
+    "olid": "OL17824318W"
+  },
+  {
+    "id": "the-vanishing-half",
+    "title": "The Vanishing Half",
+    "author": "Brit Bennett",
+    "category": "literary",
+    "coverId": 10095692,
+    "olid": "OL20799434W"
+  },
+  {
+    "id": "how-to-win-friends",
+    "title": "How to Win Friends and Influence People",
+    "author": "Dale Carnegie",
+    "category": "nonfiction",
+    "coverId": 15218961,
+    "olid": "OL1063267W"
+  },
+  {
+    "id": "demon-copperhead",
+    "title": "Demon Copperhead",
+    "author": "Barbara Kingsolver",
+    "category": "literary",
+    "coverId": 13141227,
+    "olid": "OL27052926W"
+  },
+  {
+    "id": "little-women",
+    "title": "Little Women",
+    "author": "Louisa May Alcott",
+    "category": "classic",
+    "coverId": 8775559,
+    "olid": "OL29983W"
+  },
+  {
+    "id": "little-fires-everywhere",
+    "title": "Little Fires Everywhere",
+    "author": "Celeste Ng",
+    "category": "literary",
+    "coverId": 8111914,
+    "olid": "OL17821431W"
+  },
+  {
+    "id": "the-anxious-generation",
+    "title": "The Anxious Generation",
+    "author": "Jonathan Haidt",
+    "category": "nonfiction",
+    "coverId": 15104803,
+    "olid": "OL37575384W"
+  },
+  {
+    "id": "eleanor-oliphant",
+    "title": "Eleanor Oliphant Is Completely Fine",
+    "author": "Gail Honeyman",
+    "category": "literary",
+    "coverId": 8415055,
+    "olid": "OL19781733W"
+  },
+  {
+    "id": "the-bell-jar",
+    "title": "The Bell Jar",
+    "author": "Sylvia Plath",
+    "category": "classic",
+    "coverId": 8477115,
+    "olid": "OL1865528W"
+  },
+  {
+    "id": "it-ends-with-us",
+    "title": "It Ends with Us",
+    "author": "Colleen Hoover",
+    "category": "contemporary",
+    "coverId": 10473609,
+    "olid": "OL18020194W"
+  },
+  {
+    "id": "the-hunger-games",
+    "title": "The Hunger Games",
+    "author": "Suzanne Collins",
+    "category": "genre",
+    "olid": "OL5735363W",
+    "coverId": 15139410
+  },
+  {
+    "id": "homegoing",
+    "title": "Homegoing",
+    "author": "Yaa Gyasi",
+    "category": "literary",
+    "coverId": 8081171,
+    "olid": "OL17795349W"
+  },
+  {
+    "id": "shoe-dog",
+    "title": "Shoe Dog",
+    "author": "Phil Knight",
+    "category": "nonfiction",
+    "coverId": 9408735,
+    "olid": "OL17825802W"
+  },
+  {
+    "id": "my-brilliant-friend",
+    "title": "My Brilliant Friend",
+    "author": "Elena Ferrante",
+    "category": "translated",
+    "coverId": 11527690,
+    "olid": "OL16520879W"
+  },
+  {
+    "id": "stoner",
+    "title": "Stoner",
+    "author": "John Williams",
+    "category": "classic",
+    "coverId": 8310729,
+    "olid": "OL3511459W"
+  },
+  {
+    "id": "fourth-wing",
+    "title": "Fourth Wing",
+    "author": "Rebecca Yarros",
+    "category": "contemporary",
+    "coverId": 14407898,
+    "olid": "OL29226517W"
+  },
+  {
+    "id": "the-shining",
+    "title": "The Shining",
+    "author": "Stephen King",
+    "category": "genre",
+    "olid": "OL81633W",
+    "coverId": 15090478
+  },
+  {
+    "id": "a-gentleman-in-moscow",
+    "title": "A Gentleman in Moscow",
+    "author": "Amor Towles",
+    "category": "literary",
+    "coverId": 11326818,
+    "olid": "OL17797130W"
+  },
+  {
+    "id": "killers-of-the-flower-moon",
+    "title": "Killers of the Flower Moon",
+    "author": "David Grann",
+    "category": "nonfiction",
+    "coverId": 8055064,
+    "olid": "OL17778665W"
+  },
+  {
+    "id": "a-man-called-ove",
+    "title": "A Man Called Ove",
+    "author": "Fredrik Backman",
+    "category": "translated",
+    "coverId": 7437001,
+    "olid": "OL16793865W"
+  },
+  {
+    "id": "east-of-eden",
+    "title": "East of Eden",
+    "author": "John Steinbeck",
+    "category": "classic",
+    "coverId": 11386937,
+    "olid": "OL23166W"
+  },
+  {
+    "id": "yellowface",
+    "title": "Yellowface",
+    "author": "R.F. Kuang",
+    "category": "contemporary",
+    "coverId": 13195421,
+    "olid": "OL37803036W"
+  },
+  {
+    "id": "the-silent-patient",
+    "title": "The Silent Patient",
+    "author": "Alex Michaelides",
+    "category": "genre",
+    "coverId": 9407338,
+    "olid": "OL19096402W"
+  },
+  {
+    "id": "my-year-of-rest-and-relaxation",
+    "title": "My Year of Rest and Relaxation",
+    "author": "Ottessa Moshfegh",
+    "category": "literary",
+    "coverId": 8202400,
+    "olid": "OL17889978W"
+  },
+  {
+    "id": "bad-blood",
+    "title": "Bad Blood",
+    "author": "John Carreyrou",
+    "category": "nonfiction",
+    "coverId": 12735651,
+    "olid": "OL17892614W"
+  },
+  {
+    "id": "convenience-store-woman",
+    "title": "Convenience Store Woman",
+    "author": "Sayaka Murata",
+    "category": "translated",
+    "coverId": 9315164,
+    "olid": "OL19744024W"
+  },
+  {
+    "id": "count-of-monte-cristo",
+    "title": "The Count of Monte Cristo",
+    "author": "Alexandre Dumas",
+    "category": "classic",
+    "olid": "OL36287W",
+    "coverId": 14563850
+  },
+  {
+    "id": "lessons-in-chemistry",
+    "title": "Lessons in Chemistry",
+    "author": "Bonnie Garmus",
+    "category": "contemporary",
+    "coverId": 15179919,
+    "olid": "OL25344431W"
+  },
+  {
+    "id": "a-court-of-thorns-and-roses",
+    "title": "A Court of Thorns and Roses",
+    "author": "Sarah J. Maas",
+    "category": "genre",
+    "coverId": 14832049,
+    "olid": "OL17352669W"
+  },
+  {
+    "id": "the-kite-runner",
+    "title": "The Kite Runner",
+    "author": "Khaled Hosseini",
+    "category": "literary",
+    "olid": "OL5781992W",
+    "coverId": 15162786
+  },
+  {
+    "id": "empire-of-pain",
+    "title": "Empire of Pain",
+    "author": "Patrick Radden Keefe",
+    "category": "nonfiction",
+    "coverId": 10678221,
+    "olid": "OL24218388W"
+  },
+  {
+    "id": "norwegian-wood",
+    "title": "Norwegian Wood",
+    "author": "Haruki Murakami",
+    "category": "translated",
+    "coverId": 6391163,
+    "olid": "OL2625457W"
+  }
+]
