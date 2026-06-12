@@ -54,17 +54,14 @@ export const metadata: Metadata = {
     "apple-mobile-web-app-capable": "yes",
   },
 
-  // Apple touch icon — the icon shown on the iOS home screen after install.
-  // ⚠️  File needed: /public/apple-touch-icon.png (180×180px)
-  icons: {
-    apple: "/apple-touch-icon.png",
-  },
+  // Favicon (app/favicon.ico) and the iOS home-screen icon (app/apple-icon.png)
+  // are wired via the App Router file conventions — Next emits the <link> tags
+  // automatically, so no `icons` config is needed here.
 
   // Open Graph — controls the link preview when joinverso.io is shared.
-  // ⚠️  OG image needed: /public/og-image.png (1200×630px)
   openGraph: {
     title: "Verso",
-    description: "Find your next book through the friends whose taste you actually trust",
+    description: "Reading is better with friends.",
     url: "https://www.joinverso.io",
     siteName: "Verso",
     type: "website",
@@ -82,7 +79,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Verso",
-    description: "Find your next book through the friends whose taste you actually trust",
+    description: "Reading is better with friends.",
     images: ["https://www.joinverso.io/og-image.png"],
   },
 }
