@@ -27,23 +27,41 @@ export interface SearchResult extends UserSummary {
 
 // ── Mutations ─────────────────────────────────────────────────────────────────
 
+/**
+ * Result of a follow/unfollow mutation. `isFollowing` is read back from the
+ * follows table *after* the write, so callers can set their button from the
+ * real DB state rather than trusting an optimistic flip — the optimistic value
+ * can drift out of sync (e.g. Follow → Unfollow → Follow), so DB truth wins.
+ */
+export interface FollowResult {
+  isFollowing: boolean
+  error: string | null
+}
+
 export async function followUser(
   followerId: string,
   followedId: string,
-): Promise<{ error: string | null }> {
+): Promise<FollowResult> {
+  // Idempotent: ON CONFLICT DO NOTHING so a re-follow over a leftover row never
+  // trips the UNIQUE(follower_id, followed_id) constraint and errors out.
   const { error } = await db
     .from("follows")
-    .insert({ follower_id: followerId, followed_id: followedId })
+    .upsert(
+      { follower_id: followerId, followed_id: followedId },
+      { onConflict: "follower_id,followed_id", ignoreDuplicates: true },
+    )
   // Follow graph changed → drop the acting user's cached picks so the next Home
   // load recomputes with the new friend included. Only on success.
   if (!error) await invalidateWeeklyPicks(followerId)
-  return { error: error?.message ?? null }
+  // Confirm against the table so the button reflects reality after every tap.
+  const confirmed = await isFollowing(followerId, followedId)
+  return { isFollowing: confirmed, error: error?.message ?? null }
 }
 
 export async function unfollowUser(
   followerId: string,
   followedId: string,
-): Promise<{ error: string | null }> {
+): Promise<FollowResult> {
   const { error } = await db
     .from("follows")
     .delete()
@@ -52,7 +70,9 @@ export async function unfollowUser(
   // Follow graph changed → drop the acting user's cached picks so the unfollowed
   // person's books stop appearing on the next Home load. Only on success.
   if (!error) await invalidateWeeklyPicks(followerId)
-  return { error: error?.message ?? null }
+  // Confirm against the table so the button reflects reality after every tap.
+  const confirmed = await isFollowing(followerId, followedId)
+  return { isFollowing: confirmed, error: error?.message ?? null }
 }
 
 // ── Queries ───────────────────────────────────────────────────────────────────

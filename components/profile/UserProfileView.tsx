@@ -83,8 +83,10 @@ export function UserProfileView({ targetId }: { targetId: string }) {
     if (!currentUserId || followPending) return
     setFollowPending(true)
     setFollowing(true)                           // optimistic
-    const { error } = await followUser(currentUserId, targetId)
-    if (error) setFollowing(false)               // revert on failure
+    // Settle on the real follows-table state the mutation confirmed, so the
+    // pill can't stick on "Following" after a re-follow that didn't persist.
+    const { isFollowing: confirmed } = await followUser(currentUserId, targetId)
+    setFollowing(confirmed)
     setFollowPending(false)
   }
 
@@ -92,8 +94,8 @@ export function UserProfileView({ targetId }: { targetId: string }) {
     if (!currentUserId || followPending) return
     setFollowPending(true)
     setFollowing(false)                          // optimistic
-    const { error } = await unfollowUser(currentUserId, targetId)
-    if (error) setFollowing(true)                // revert on failure
+    const { isFollowing: confirmed } = await unfollowUser(currentUserId, targetId)
+    setFollowing(confirmed)
     setFollowPending(false)
   }
 

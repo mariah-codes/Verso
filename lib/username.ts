@@ -81,24 +81,33 @@ export function validateUsername(input: string): UsernameValidation {
 // ── Availability ──────────────────────────────────────────────────────────────
 
 /**
- * Case-insensitive availability check against the DB. Returns true if no user
- * already holds the handle. (The UNIQUE index on lower(username) is the real
+ * Case-insensitive availability check against the DB. Returns true if no OTHER
+ * user holds the handle. (The UNIQUE index on lower(username) is the real
  * guarantee at write time; this is the friendly pre-check.)
+ *
+ * `currentUserId`, when passed, EXCLUDES the caller's own row — otherwise a user
+ * re-checking the handle their own row already holds (e.g. on the onboarding
+ * profile step after it was generated/saved) reads as a collision against
+ * themselves and the field flips to "taken".
  */
-export async function isUsernameAvailable(username: string): Promise<boolean> {
-  const handle = username.toLowerCase()
-  const { data, error } = await db
-    .from("users")
-    .select("id")
-    .ilike("username", handle) // no % / _ in valid handles → case-insensitive equality
-    .limit(1)
-    .maybeSingle()
+export async function isUsernameAvailable(
+  username: string,
+  currentUserId?: string,
+): Promise<boolean> {
+  const handle = username.trim().toLowerCase()
+  // ilike WITHOUT % / _ wildcards is exact case-insensitive equality
+  // (lower(username) = lower(handle)) — a valid handle contains no wildcard
+  // chars, so "mariatest3" never matches "mariatest". `.limit(1)` returns an
+  // array (no maybeSingle error if more than one ever matched).
+  let query = db.from("users").select("id").ilike("username", handle).limit(1)
+  if (currentUserId) query = query.neq("id", currentUserId)
+  const { data, error } = await query
 
   if (error) {
     console.error("[username] availability check:", error.message)
     return false // fail closed — don't claim a handle is free if we couldn't check
   }
-  return !data
+  return (data?.length ?? 0) === 0
 }
 
 // ── Generation ────────────────────────────────────────────────────────────────

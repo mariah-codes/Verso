@@ -117,9 +117,11 @@ export default function FriendsPage() {
     }
     setFollowing((prev) => [optimisticEntry, ...prev])
 
-    const { error } = await followUser(userId, target.id)
+    // `confirmed` is read back from the follows table — trust it over `error`
+    // alone so a silent no-op (row never landed) reverts too.
+    const { isFollowing: confirmed, error } = await followUser(userId, target.id)
 
-    if (error) {
+    if (error || !confirmed) {
       // Revert both
       setSearchResults((prev) =>
         prev.map((u) => (u.id === target.id ? { ...u, isFollowing: false } : u)),
@@ -150,9 +152,11 @@ export default function FriendsPage() {
       prev.map((u) => (u.id === targetId ? { ...u, isFollowing: false } : u)),
     )
 
-    const { error } = await unfollowUser(userId, targetId)
+    // If the row is still there afterwards (`confirmed` true) the unfollow
+    // didn't take — restore the entry so the UI matches the table.
+    const { isFollowing: confirmed, error } = await unfollowUser(userId, targetId)
 
-    if (error) {
+    if (error || confirmed) {
       // Revert — reload the following list to restore the dropped entry
       setSearchResults((prev) =>
         prev.map((u) => (u.id === targetId ? { ...u, isFollowing: true } : u)),
