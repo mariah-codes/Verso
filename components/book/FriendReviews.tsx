@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { ChevronDown } from "lucide-react"
 import { Avatar } from "@/components/shared/Avatar"
+import { ScoreDisplay } from "@/components/shared/ScoreDisplay"
 import { formatRelativeTime } from "@/lib/feed"
 import { CommentThread } from "@/components/shared/CommentThread"
 import { ReviewStats } from "./ReviewStats"
@@ -38,14 +39,13 @@ function firstName(name: string): string {
   return name.trim().split(/\s+/)[0] || name
 }
 
-/** "Loved · 9.2 · 2d", or "Loved · 2d" when the score is null (under threshold);
- *  a trailing "· edited" when the review has been edited since first post. Time
- *  is the first-post timestamp (reviewed_at), so an edit never changes it.
- *  Rank position is deliberately never shown (DECISION_LOG 2026-06-08). */
-function metaLine(r: FriendReview): string {
+/** Time meta shown inline after the name (feed-style): "20h", or "20h · edited"
+ *  when edited since first post. Time is the first-post timestamp (reviewed_at),
+ *  so an edit never moves it. The score lives in its own terracotta badge; the
+ *  tier is shown there only when there's no score yet (DECISION_LOG 2026-06-08:
+ *  rank position is never shown). */
+function timeMeta(r: FriendReview): string {
   const parts: string[] = []
-  if (r.tier && SHORT_TIER[r.tier]) parts.push(SHORT_TIER[r.tier])
-  if (r.score !== null) parts.push(r.score.toFixed(1))
   if (r.reviewedAt) parts.push(formatRelativeTime(r.reviewedAt))
   if (r.editedAt) parts.push("edited")
   return parts.join(" · ")
@@ -93,7 +93,7 @@ export function FriendReviews({
   }
 
   return (
-    <div className="w-full max-w-xs pt-5 border-t border-border/50">
+    <div className="w-full max-w-sm pt-5 border-t border-border/50">
       <h3 className="text-[15px] font-medium text-foreground/75 mb-2">Reviews from friends</h3>
 
       {loading ? (
@@ -133,14 +133,21 @@ export function FriendReviews({
                     size={26}
                     initialsClassName="text-[10px]"
                   />
-                  <span className="flex-1 min-w-0">
-                    <span className="block text-[14px] font-medium text-foreground leading-snug">
-                      {firstName(r.displayName)}
+                  {/* Name + time on one line, like the feed header. */}
+                  <p className="flex-1 min-w-0 truncate text-[14px] leading-snug">
+                    <span className="font-medium text-foreground">{firstName(r.displayName)}</span>
+                    {timeMeta(r) && <span className="text-foreground/40"> · {timeMeta(r)}</span>}
+                  </p>
+                  {/* Rating badge — terracotta EB Garamond, the app's score
+                      treatment. Falls back to the tier (italic, muted) only when
+                      there's no score yet, echoing the feed. */}
+                  {r.score !== null ? (
+                    <ScoreDisplay score={r.score} className="text-base shrink-0" />
+                  ) : r.tier && SHORT_TIER[r.tier] ? (
+                    <span className="shrink-0 text-[12px] italic text-foreground/40">
+                      {SHORT_TIER[r.tier]}
                     </span>
-                    <span className="block text-[12px] italic leading-snug" style={{ color: "#9C4A2F" }}>
-                      {metaLine(r)}
-                    </span>
-                  </span>
+                  ) : null}
                   <ChevronDown
                     className={`size-4 shrink-0 text-foreground/30 transition-transform ${open ? "rotate-180" : ""}`}
                   />
@@ -148,7 +155,7 @@ export function FriendReviews({
 
                 {open && (
                   <div className="mt-2 pl-[34px]">
-                    <p className="text-[15px] leading-relaxed text-foreground whitespace-pre-line">
+                    <p className="text-[14px] leading-relaxed text-foreground whitespace-pre-line">
                       {r.publicNote}
                     </p>
                     <div className="mt-2">

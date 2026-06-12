@@ -628,7 +628,7 @@ export default function BookPage() {
           )}
 
           {/* ── Shelf status control ────────────────────────────────────────── */}
-          <div className="w-full max-w-xs space-y-2">
+          <div className="w-full max-w-sm space-y-2">
             {userBook ? (
               <>
                 {/* Current status — tappable, looks interactive */}
@@ -711,11 +711,53 @@ export default function BookPage() {
             )}
           </div>
 
+          {/* ── Remove from shelf — pinned directly under the status dropdown,
+              where the page structure is stable (it used to sit below friends'
+              reviews, which buried it as reviews accumulated). No divider: it's a
+              quiet sub-action of the status control, not its own section. The
+              -mt tightens it toward the dropdown so it reads as attached. ───── */}
+          {userBook && (
+            <div className="w-full max-w-sm -mt-2">
+              {!confirmRemove ? (
+                <button
+                  onClick={() => {
+                    // Only finished books need a confirm — ranking data would be lost.
+                    // Unranked books (want-to-read, reading) remove immediately.
+                    userBook.status === "finished"
+                      ? setConfirmRemove(true)
+                      : handleRemove()
+                  }}
+                  className="text-xs text-foreground/35 hover:text-foreground/60 transition-colors underline underline-offset-2"
+                >
+                  Remove from shelf
+                </button>
+              ) : (
+                <div className="flex items-center gap-4">
+                  <span className="text-xs text-foreground/50">Remove this book?</span>
+                  <button
+                    onClick={handleRemove}
+                    disabled={removing}
+                    className="text-xs font-medium underline underline-offset-2 disabled:opacity-40"
+                    style={{ color: "#A8321A" }}
+                  >
+                    {removing ? "Removing…" : "Remove"}
+                  </button>
+                  <button
+                    onClick={() => setConfirmRemove(false)}
+                    className="text-xs text-foreground/40 underline underline-offset-2"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* ── Stop reading — quiet secondary affordance under the status ──────
               control. Opens the bottom sheet; deliberately recedes so the
               status dropdown stays the primary action. */}
           {userBook?.status === "reading" && (
-            <div className="w-full max-w-xs flex justify-center">
+            <div className="w-full max-w-sm flex justify-center">
               <button
                 onClick={() => setStopOpen(true)}
                 className="inline-flex items-center gap-1.5 text-xs text-foreground/60 hover:text-foreground/80 underline underline-offset-4 transition-colors"
@@ -756,44 +798,6 @@ export default function BookPage() {
               viewerId={userId}
               bookId={book.id}
             />
-          )}
-
-          {/* ── Remove from shelf ───────────────────────────────────────────── */}
-          {userBook && (
-            <div className="w-full max-w-xs pt-5 border-t border-border/50">
-              {!confirmRemove ? (
-                <button
-                  onClick={() => {
-                    // Only finished books need a confirm — ranking data would be lost.
-                    // Unranked books (want-to-read, reading) remove immediately.
-                    userBook.status === "finished"
-                      ? setConfirmRemove(true)
-                      : handleRemove()
-                  }}
-                  className="text-xs text-foreground/35 hover:text-foreground/60 transition-colors underline underline-offset-2"
-                >
-                  Remove from shelf
-                </button>
-              ) : (
-                <div className="flex items-center gap-4">
-                  <span className="text-xs text-foreground/50">Remove this book?</span>
-                  <button
-                    onClick={handleRemove}
-                    disabled={removing}
-                    className="text-xs font-medium underline underline-offset-2 disabled:opacity-40"
-                    style={{ color: "#A8321A" }}
-                  >
-                    {removing ? "Removing…" : "Remove"}
-                  </button>
-                  <button
-                    onClick={() => setConfirmRemove(false)}
-                    className="text-xs text-foreground/40 underline underline-offset-2"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
-            </div>
           )}
 
         </div>
