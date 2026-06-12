@@ -155,10 +155,12 @@ function SignInForm() {
               <FormItem>
                 <div className="flex items-center justify-between">
                   <FormLabel>Password</FormLabel>
-                  {/* Placeholder — wire up password reset later */}
-                  <span className="text-xs text-foreground/40 font-sans">
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs text-foreground/40 font-sans underline underline-offset-4 hover:text-foreground/60 transition-colors"
+                  >
                     Forgot password?
-                  </span>
+                  </Link>
                 </div>
                 <FormControl>
                   <Input type="password" placeholder="••••••••" {...field} />

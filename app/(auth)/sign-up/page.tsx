@@ -40,6 +40,7 @@ export default function SignUpPage() {
   const router = useRouter()
   const [serverError, setServerError] = useState<string | null>(null)
   const [emailSent, setEmailSent] = useState(false)
+  const [resendState, setResendState] = useState<"idle" | "sending" | "sent">("idle")
 
   const form = useForm<SignUpValues>({
     resolver: zodResolver(signUpSchema),
@@ -75,6 +76,34 @@ export default function SignUpPage() {
     router.push("/onboarding/profile")
   }
 
+  async function resendConfirmation() {
+    if (resendState === "sending") return
+    setResendState("sending")
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: form.getValues("email"),
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding/profile`,
+      },
+    })
+    if (error) {
+      setServerError(error.message)
+      setResendState("idle")
+      return
+    }
+    setResendState("sent")
+  }
+
+  // Back to the empty form so a mistyped address can be corrected. (We're
+  // already on /sign-up; resetting state is the in-place equivalent of a fresh
+  // visit, without a no-op route change.)
+  function useDifferentEmail() {
+    setEmailSent(false)
+    setResendState("idle")
+    setServerError(null)
+    form.reset()
+  }
+
   async function signUpWithGoogle() {
     setServerError(null)
     const { error } = await supabase.auth.signInWithOAuth({
@@ -104,6 +133,29 @@ export default function SignUpPage() {
           </span>
           . Click it to finish creating your account.
         </p>
+
+        {/* Escape hatches for a mistyped address — minimal ghost links. */}
+        <div className="flex flex-col items-center gap-2 pt-2">
+          <button
+            type="button"
+            onClick={resendConfirmation}
+            disabled={resendState === "sending"}
+            className="text-sm text-foreground/50 underline underline-offset-4 hover:text-foreground/70 transition-colors disabled:opacity-50"
+          >
+            {resendState === "sending"
+              ? "Resending…"
+              : resendState === "sent"
+                ? "Email resent"
+                : "Resend email"}
+          </button>
+          <button
+            type="button"
+            onClick={useDifferentEmail}
+            className="text-sm text-foreground/50 underline underline-offset-4 hover:text-foreground/70 transition-colors"
+          >
+            Use a different email
+          </button>
+        </div>
       </div>
     )
   }

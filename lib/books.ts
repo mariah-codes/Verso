@@ -34,9 +34,13 @@ export async function addBookToShelf(
   const fail = (msg: string): AddBookResult => ({ error: msg, bookId: null, userBookId: null })
 
   // ── 1. Ensure the book exists in the reference table ─────────────────────
-  // `upsert` with ignoreDuplicates:true silently skips when open_library_id
-  // already exists — no error, no UPDATE. We SELECT afterwards to get the id
-  // regardless of whether we just inserted or it pre-existed.
+  // Upsert with UPDATE-on-conflict (no ignoreDuplicates): on an existing
+  // open_library_id this refreshes title/cover_url/author/year. That's what
+  // self-heals books added before the English-edition heuristic in
+  // lib/open-library.ts — a stale foreign-canonical row (e.g. Kundera's Czech
+  // title + French cover) is corrected the next time anyone adds it via Search.
+  // Requires the books UPDATE RLS policy (migration 20260612000001). We SELECT
+  // afterwards to get the id regardless of insert-vs-update.
   const { error: upsertError } = await db.from("books").upsert(
     {
       open_library_id: book.openLibraryId,
@@ -45,7 +49,7 @@ export async function addBookToShelf(
       cover_url: book.coverUrl ?? "",
       published_year: book.year,
     },
-    { onConflict: "open_library_id", ignoreDuplicates: true },
+    { onConflict: "open_library_id" },
   )
 
   if (upsertError) {
