@@ -78,7 +78,7 @@ export default function OnboardingCovers() {
                     className="absolute top-1.5 right-1.5 size-5 rounded-full flex items-center justify-center shadow"
                     style={{ backgroundColor: "#9C4A2F" }}
                   >
-                    <Check className="size-3.5 text-white" strokeWidth={3} />
+                    <Check className="size-3.5 text-white" strokeWidth={1.75} />
                   </span>
                 )}
               </button>

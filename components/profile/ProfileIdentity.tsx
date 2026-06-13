@@ -27,7 +27,7 @@ export function ProfileIdentity({ displayName, username, photoUrl }: ProfileIden
           {displayName}
         </h1>
         {username && (
-          <p className="text-sm text-foreground/45 font-sans leading-tight">@{username}</p>
+          <p className="text-sm text-foreground/40 font-sans leading-tight">@{username}</p>
         )}
       </div>
     </div>

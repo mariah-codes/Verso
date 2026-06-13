@@ -30,7 +30,7 @@ export function BookCard({ book, onClick }: BookCardProps) {
           />
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-muted px-2">
-            <BookOpen className="size-6 text-muted-foreground opacity-40" />
+            <BookOpen className="size-6 text-muted-foreground opacity-40"  strokeWidth={1.75} />
             <span className="text-[10px] text-muted-foreground text-center leading-snug line-clamp-3">
               {book.title}
             </span>
@@ -40,7 +40,7 @@ export function BookCard({ book, onClick }: BookCardProps) {
 
       {/* Metadata — tight, two lines max */}
       <div className="space-y-0.5 px-0.5">
-        <p className="text-xs font-medium text-foreground leading-snug line-clamp-2">
+        <p className="text-[15px] text-foreground leading-tight line-clamp-2 font-serif tracking-[0.01em]">
           {book.title}
         </p>
         <p className="text-[10px] text-foreground/55 line-clamp-1">{book.author}</p>

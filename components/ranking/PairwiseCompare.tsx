@@ -38,13 +38,13 @@ export function PairwiseCompare({
             ].join(" ")}
           />
         ))}
-        <span className="text-xs text-foreground/35 ml-1 font-sans tabular-nums">
+        <span className="text-xs text-foreground/40 ml-1 font-sans tabular-nums">
           {questionNum}/{totalEstimate}
         </span>
       </div>
 
       {/* Prompt */}
-      <p className="text-xs font-semibold tracking-widest uppercase text-foreground/40 font-sans text-center">
+      <p className="text-xs font-medium tracking-widest uppercase text-foreground/40 font-sans text-center">
         Which did you love more?
       </p>
 
@@ -88,7 +88,7 @@ function BookCover({ book, onClick, accent }: { book: BookPreview; onClick: () =
           <Image src={book.coverUrl} alt={book.title} fill sizes="120px" className="object-cover" />
         ) : (
           <div className="absolute inset-0 bg-muted flex flex-col items-center justify-center gap-1 px-2">
-            <BookOpen className="size-6 text-muted-foreground/40" />
+            <BookOpen className="size-6 text-muted-foreground/40"  strokeWidth={1.75} />
             <span className="text-xs text-center text-muted-foreground line-clamp-3 leading-tight">
               {book.title}
             </span>

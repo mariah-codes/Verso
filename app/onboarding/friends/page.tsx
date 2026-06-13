@@ -78,14 +78,14 @@ export default function OnboardingFriends() {
       </div>
 
       {/* Search */}
-      <div className="shrink-0 flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-3.5 mb-3 focus-within:border-[#9C4A2F]/50">
-        <Search className="size-4 text-foreground/40 shrink-0" />
+      <div className="shrink-0 flex items-center gap-2 rounded-xl border border-[rgba(31,27,22,0.07)] bg-muted/40 px-3.5 mb-3 focus-within:border-[#9C4A2F]/50">
+        <Search className="size-4 text-foreground/40 shrink-0"  strokeWidth={1.75} />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by name"
           autoCapitalize="none"
-          className="flex-1 bg-transparent py-3 text-base text-foreground placeholder:text-foreground/30 outline-none"
+          className="flex-1 bg-transparent py-3 text-base text-foreground placeholder:text-foreground/40 outline-none"
         />
       </div>
 
@@ -104,9 +104,9 @@ export default function OnboardingFriends() {
                 <button
                   onClick={() => toggleFollow(u)}
                   disabled={pending.has(u.id)}
-                  className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                  className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
                     u.isFollowing
-                      ? "border border-border text-foreground/55"
+                      ? "border border-foreground/20 text-foreground/55"
                       : "text-white"
                   }`}
                   style={u.isFollowing ? undefined : { backgroundColor: "#9C4A2F" }}

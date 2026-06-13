@@ -299,7 +299,7 @@ export function RankingFlow({ book, userId, onClose, onComplete }: RankingFlowPr
           aria-label="Close ranking"
           className="p-2 -mr-2 rounded-full text-foreground/40 hover:text-foreground transition-colors"
         >
-          <X className="size-5" />
+          <X className="size-5"  strokeWidth={1.75} />
         </button>
       </div>
 
@@ -361,7 +361,7 @@ export function RankingFlow({ book, userId, onClose, onComplete }: RankingFlowPr
             <p className="text-sm text-destructive">{errorMsg}</p>
             <button
               onClick={() => setPhase("tier")}
-              className="text-sm text-foreground/50 underline underline-offset-2"
+              className="text-sm text-foreground/55 underline underline-offset-2"
             >
               Try again
             </button>

@@ -44,7 +44,7 @@ export function ShelfBookCard({
           />
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-muted px-2">
-            <BookOpen className="size-5 text-muted-foreground opacity-40" />
+            <BookOpen className="size-5 text-muted-foreground opacity-40"  strokeWidth={1.75} />
             <span className="text-[10px] text-muted-foreground text-center leading-snug line-clamp-3">
               {book.title}
             </span>
@@ -60,14 +60,14 @@ export function ShelfBookCard({
             — muted terracotta so it reads as "your writing here", not a grey
             system icon. */}
         <div className="flex items-baseline justify-between gap-1">
-          <p className="flex-1 min-w-0 text-xs font-medium text-foreground leading-snug truncate">
+          <p className="flex-1 min-w-0 text-[15px] text-foreground leading-snug truncate font-serif tracking-[0.01em]">
             {book.title}
           </p>
           {book.status === "finished" && (book.score !== null || book.hasPublicNote) && (
             <span className="flex items-center gap-[3px] shrink-0">
               {book.score !== null && <ScoreDisplay score={book.score} className="text-sm shrink-0" />}
               {book.hasPublicNote && (
-                <AlignLeft className="size-[10px] shrink-0" style={{ color: "#B0623F" }} />
+                <AlignLeft className="size-[10px] shrink-0" style={{ color: "#B0623F" }}  strokeWidth={1.75} />
               )}
             </span>
           )}

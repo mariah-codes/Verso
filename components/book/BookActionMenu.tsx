@@ -137,7 +137,7 @@ export function BookActionMenu({
             {/* Title / author */}
             <div className="flex-1 min-w-0 pt-0.5 space-y-0.5">
               <p
-                className="text-base font-medium text-foreground leading-snug line-clamp-2"
+                className="text-[17px] font-medium text-foreground leading-snug line-clamp-2 tracking-[0.01em]"
                 style={{ fontFamily: "var(--font-serif)" }}
               >
                 {book.title}
@@ -154,7 +154,7 @@ export function BookActionMenu({
               aria-label="Close"
               className="shrink-0 p-1 -mr-1 rounded-full text-foreground/40 hover:text-foreground transition-colors"
             >
-              <X className="size-5" />
+              <X className="size-5"  strokeWidth={1.75} />
             </button>
           </div>
         )}

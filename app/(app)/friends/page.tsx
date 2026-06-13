@@ -203,7 +203,7 @@ export default function FriendsPage() {
       {/* ── Sticky search bar ──────────────────────────────────────────────── */}
       <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3">
         <div className="relative flex items-center">
-          <Search className="absolute left-3 size-4 text-foreground/40 pointer-events-none" />
+          <Search className="absolute left-3 size-4 text-foreground/40 pointer-events-none"  strokeWidth={1.75} />
           <input
             ref={inputRef}
             value={query}
@@ -224,7 +224,7 @@ export default function FriendsPage() {
               aria-label="Clear search"
               className="absolute right-3 text-foreground/40 hover:text-foreground transition-colors"
             >
-              <X className="size-4" />
+              <X className="size-4"  strokeWidth={1.75} />
             </button>
           )}
         </div>
@@ -323,7 +323,7 @@ export default function FriendsPage() {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-xs font-semibold tracking-widest uppercase text-foreground/50 font-sans">
+    <h2 className="text-xs font-medium tracking-widest uppercase text-foreground/60 font-sans">
       {children}
     </h2>
   )
@@ -393,7 +393,7 @@ function SearchUserRow({
         ].join(" ")}
         style={{ backgroundColor: "#9C4A2F" }}
       >
-        {pending ? <SmallSpinner /> : <><UserPlus className="size-3.5" />Follow</>}
+        {pending ? <SmallSpinner /> : <><UserPlus className="size-3.5"  strokeWidth={1.75} />Follow</>}
       </button>
     </div>
   )
@@ -449,7 +449,7 @@ function FollowingUserRow({
           </p>
           {user.currentlyReading && (
             <p className="flex items-center gap-1 text-xs text-foreground/40 mt-0.5 min-w-0">
-              <BookOpen className="size-3 shrink-0" />
+              <BookOpen className="size-3 shrink-0"  strokeWidth={1.75} />
               <span className="truncate">{user.currentlyReading}</span>
             </p>
           )}

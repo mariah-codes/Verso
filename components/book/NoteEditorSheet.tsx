@@ -93,7 +93,7 @@ export function NoteEditorSheet({
           >
             {copy.title}
           </DrawerTitle>
-          <DrawerDescription className="text-left text-foreground/50">
+          <DrawerDescription className="text-left text-foreground/55">
             {copy.subtitle}
           </DrawerDescription>
         </DrawerHeader>
@@ -122,7 +122,7 @@ export function NoteEditorSheet({
           <button
             onClick={() => onOpenChange(false)}
             disabled={saving}
-            className="px-5 rounded-xl py-2.5 text-sm text-foreground/45 hover:text-foreground transition-colors disabled:opacity-50"
+            className="px-5 rounded-xl py-2.5 text-sm text-foreground/40 hover:text-foreground transition-colors disabled:opacity-50"
           >
             Cancel
           </button>

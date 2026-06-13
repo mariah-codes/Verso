@@ -110,14 +110,14 @@ function PickCard({ pick }: { pick: EnrichedPick }) {
             />
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-muted px-2">
-              <BookOpen className="size-5 text-muted-foreground opacity-40" />
+              <BookOpen className="size-5 text-muted-foreground opacity-40"  strokeWidth={1.75} />
               <span className="text-[10px] text-muted-foreground text-center leading-snug line-clamp-3">
                 {pick.title}
               </span>
             </div>
           )}
         </div>
-        <p className="mt-2 text-xs font-medium text-foreground leading-snug line-clamp-2 px-0.5">
+        <p className="mt-2 text-[15px] text-foreground leading-tight line-clamp-2 px-0.5 font-serif tracking-[0.01em]">
           {pick.title}
         </p>
       </Link>
@@ -177,7 +177,7 @@ function ColdStart() {
             key={i}
             className="flex-1 aspect-[2/3] rounded-lg border-2 border-dashed border-border flex items-center justify-center"
           >
-            <BookOpen className="size-6 text-foreground/15" strokeWidth={1.5} />
+            <BookOpen className="size-6 text-foreground/15" strokeWidth={1.75} />
           </div>
         ))}
       </div>
@@ -185,7 +185,7 @@ function ColdStart() {
       {/* Warming-up prompt — stronger border + subtle warm fill so the card has
           presence against the cream page rather than melting into it. */}
       <div className="mt-4 rounded-xl border border-foreground/10 bg-foreground/[0.025] px-4 py-4">
-        <p className="text-sm font-semibold text-foreground">Your picks are warming up</p>
+        <p className="text-sm font-medium text-foreground">Your picks are warming up</p>
         <p className="text-sm text-foreground/55 mt-1 leading-relaxed">
           Picks get better as you and your friends add more of what you’ve read.
         </p>
@@ -199,14 +199,15 @@ function ColdStart() {
 }
 
 /** Filled chip that reads as a tappable button: near-white surface against the
- *  card, with the one terracotta accent on the screen (the icon). */
+ *  card. The icon stays in the charcoal ramp — terracotta is reserved for
+ *  primary/active states, not chip decoration. */
 function ChipLink({ href, Icon, label }: { href: string; Icon: React.ElementType; label: string }) {
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-[#FCFBF9] px-3 py-1.5 text-xs font-medium text-foreground/75 hover:border-[#9C4A2F]/40 transition-colors"
+      className="inline-flex items-center gap-1.5 rounded-full border border-[rgba(31,27,22,0.07)] bg-[#FCFBF9] px-3 py-1.5 text-xs font-medium text-foreground/70 hover:border-foreground/20 transition-colors"
     >
-      <Icon className="size-3.5 shrink-0" style={{ color: "#9C4A2F" }} />
+      <Icon className="size-3.5 shrink-0 text-foreground/40" strokeWidth={1.75} />
       {label}
     </Link>
   )

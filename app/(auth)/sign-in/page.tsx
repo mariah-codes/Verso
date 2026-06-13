@@ -190,8 +190,7 @@ function SignInForm() {
         Don&apos;t have an account?{" "}
         <Link
           href="/sign-up"
-          className="font-medium underline underline-offset-4"
-          style={{ color: "#9C4A2F" }}
+          className="font-medium text-foreground/70 underline underline-offset-4"
         >
           Create one
         </Link>

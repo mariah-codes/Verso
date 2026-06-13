@@ -16,7 +16,7 @@ const Textarea = React.forwardRef<
       ref={ref}
       className={cn(
         "w-full rounded-xl border border-input bg-muted/50 px-3 py-2.5 text-sm",
-        "text-foreground placeholder:text-foreground/30 outline-none focus:border-ring resize-none",
+        "text-foreground placeholder:text-foreground/40 outline-none focus:border-ring resize-none",
         "disabled:opacity-50",
         className,
       )}

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Trophy, BookOpen, Bookmark, BookX, Award, ChevronDown, ChevronRight } from "lucide-react"
+import { Trophy, BookOpen, Bookmark, BookX, ChevronDown, ChevronRight } from "lucide-react"
 import { ShelfBookCard } from "@/components/book/ShelfBookCard"
 import type { ShelfBook } from "@/lib/profile"
 
@@ -26,8 +26,8 @@ interface ProfileBodyProps {
 
 /**
  * The shared profile body — fixed section order for both own and friend
- * profiles: Top 3 → Currently reading → Want to read → Milestones → DNF (own
- * only). Headers live in the page; this owns everything below the taste line.
+ * profiles: Top 3 → Currently reading → Want to read → DNF (own only).
+ * Headers live in the page; this owns everything below the taste line.
  */
 export function ProfileBody({
   reading,
@@ -47,7 +47,7 @@ export function ProfileBody({
       {/* ── Top 3 ──────────────────────────────────────────────────────────── */}
       <section>
         <SectionHeader
-          icon={<Trophy className="size-4" />}
+          icon={<Trophy className="size-4"  strokeWidth={1.75} />}
           title="Finished — Top 3"
           seeAll={{ href: `${shelfBasePath}?view=finished`, total: finished.length }}
         />
@@ -64,7 +64,7 @@ export function ProfileBody({
 
       {/* ── Currently reading ──────────────────────────────────────────────── */}
       <section>
-        <SectionHeader icon={<BookOpen className="size-4" />} title="Currently reading" />
+        <SectionHeader icon={<BookOpen className="size-4"  strokeWidth={1.75} />} title="Currently reading" />
         {readingPreview.length === 0 ? (
           <EmptyLine>Nothing on the nightstand right now.</EmptyLine>
         ) : (
@@ -82,7 +82,7 @@ export function ProfileBody({
       {/* ── Want to read ───────────────────────────────────────────────────── */}
       <section>
         <SectionHeader
-          icon={<Bookmark className="size-4" />}
+          icon={<Bookmark className="size-4"  strokeWidth={1.75} />}
           title="Want to read"
           seeAll={{ href: `${shelfBasePath}?view=want`, total: wantToRead.length }}
         />
@@ -97,14 +97,8 @@ export function ProfileBody({
         )}
       </section>
 
-      {/* ── Milestones (existing placeholder, unchanged) ───────────────────── */}
-      <section>
-        <SectionHeader icon={<Award className="size-4" />} title="Milestones" />
-        <div className="rounded-xl border border-dashed border-border px-4 py-5 text-center space-y-1">
-          <p className="text-sm text-foreground/40 font-sans">Milestones coming soon</p>
-          <p className="text-xs text-foreground/30">Reading streaks, first book, 10-book club…</p>
-        </div>
-      </section>
+      {/* Milestones — removed until the feature ships (an unfinished-module
+          placeholder reads as beta). Re-add the section here when built. */}
 
       {/* ── DNF (own profile only) — header always shows so a new reader sees
           the shelf exists; the list/chevron appear once there's ≥1 book. ───── */}
@@ -129,16 +123,16 @@ function SectionHeader({
   return (
     <div className="flex items-center gap-2 mb-4">
       <span className="text-foreground/40">{icon}</span>
-      <h2 className="text-xs font-semibold tracking-widest uppercase text-foreground/60 font-sans">
+      <h2 className="text-xs font-medium tracking-widest uppercase text-foreground/60 font-sans">
         {title}
       </h2>
       {seeAll && seeAll.total > 3 && (
         <Link
           href={seeAll.href}
-          className="ml-auto flex items-center gap-0.5 text-xs text-foreground/50 hover:text-foreground/70 transition-colors"
+          className="ml-auto flex items-center gap-0.5 text-xs text-foreground/55 hover:text-foreground/70 transition-colors"
         >
           see all
-          <ChevronRight className="size-3" />
+          <ChevronRight className="size-3"  strokeWidth={1.75} />
         </Link>
       )}
     </div>
@@ -173,15 +167,15 @@ function DnfRow({ dnf }: { dnf: ShelfBook[] }) {
     <>
       <div className="flex items-center gap-2">
         <span className="text-foreground/40">
-          <BookX className="size-4" />
+          <BookX className="size-4"  strokeWidth={1.75} />
         </span>
-        <h2 className="text-xs font-semibold tracking-widest uppercase text-foreground/60 font-sans">
+        <h2 className="text-xs font-medium tracking-widest uppercase text-foreground/60 font-sans">
           DNF
         </h2>
         {hasBooks && (
           <ChevronDown
-            className={`ml-auto size-4 text-foreground/30 transition-transform ${open ? "rotate-180" : ""}`}
-          />
+            className={`ml-auto size-4 text-foreground/40 transition-transform ${open ? "rotate-180" : ""}`}
+           strokeWidth={1.75} />
         )}
       </div>
       <p className="mt-1 text-xs text-foreground/40 font-sans tabular-nums group-hover:text-foreground/55 transition-colors">

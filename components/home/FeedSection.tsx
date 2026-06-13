@@ -23,10 +23,11 @@ const ICON_BTN =
  *  content on tap). Keeps onClick and keyboard Tab focus working. */
 const preventFocusOnTap = (e: React.MouseEvent) => e.preventDefault()
 
-/** Inactive (already finished/reading/dnf) save-bookmark fill — a quiet warm
- *  putty neutral, light enough that the eye skips past it (only the terracotta
- *  states should pop). */
-const GREY_INACTIVE = "#D8CDBD"
+/** Inactive (already finished/reading/dnf) save-bookmark fill — a neutral light
+ *  grey (matching the muted-icon grey used elsewhere) rather than a warm putty,
+ *  so a non-tappable bookmark clearly reads as greyed-out, not a live control.
+ *  Only the terracotta states should pop. */
+const GREY_INACTIVE = "#C9C9C7"
 
 interface FeedSectionProps {
   events: FeedEvent[]
@@ -53,7 +54,7 @@ export function FeedSection({ events, loading, userId }: FeedSectionProps) {
       {/* Header — icon + uppercase, matching the app's section-header convention */}
       <div className="px-5 pt-6 mb-4 flex items-center gap-2">
         <Users className="size-4 text-foreground/40" />
-        <h2 className="text-xs font-semibold tracking-widest uppercase text-foreground/60 font-sans">
+        <h2 className="text-xs font-medium tracking-widest uppercase text-foreground/60 font-sans">
           From your circle
         </h2>
       </div>
@@ -166,7 +167,7 @@ function FeedItem({
   return (
     // Card tap is intentionally a no-op this pass — it will open the post /
     // comment-thread view next. It no longer navigates to book detail.
-    <article className="rounded-2xl border border-border bg-[#FCFBF9] px-4 py-3.5">
+    <article className="rounded-2xl border border-[rgba(31,27,22,0.07)] bg-[#FCFBF9] px-4 py-3">
       {/* Top row (Layout C): avatar → text → cover, vertically centered */}
       <div className="flex items-center gap-3">
         {/* Avatar (left) — leading identity; shared Avatar so it matches profiles */}
@@ -181,29 +182,35 @@ function FeedItem({
         <div className="flex-1 min-w-0">
           {/* Line 1 — actor + action · time */}
           <p className="text-sm leading-snug">
-            <span className="font-semibold text-foreground">{firstName(actor.displayName)}</span>{" "}
+            <span className="font-medium text-foreground">{firstName(actor.displayName)}</span>{" "}
             <span className="text-foreground/55">{action}</span>
             <span className="text-foreground/40"> · {formatRelativeTime(timestamp)}</span>
           </p>
 
-          {/* Line 2 — title (serif) */}
+          {/* Line 2 — title (serif), capped at 2 lines so cards stay uniform —
+              same size + truncation as the shelf card. */}
           <p
-            className="text-[15px] text-foreground leading-snug mt-1 line-clamp-2"
+            className="text-[15px] text-foreground leading-tight mt-0.5 line-clamp-2 tracking-[0.01em]"
             style={{ fontFamily: "var(--font-serif)" }}
           >
             {book.title}
           </p>
 
-          {/* Line 3 — ranked & reviewed. Score is the headline verdict — co-equal
+          {/* Line 3 — author, muted sans below the title (shelf treatment). */}
+          <p className="text-xs text-foreground/55 line-clamp-1 mt-0.5">
+            {book.author}
+          </p>
+
+          {/* Line 4 — ranked & reviewed. Score is the headline verdict — co-equal
               with the title (~16px). The tier fallback (no score yet) is a quiet,
               subordinate footnote (~12px, tertiary). */}
           {showVerdict && (
             score !== null ? (
-              <div className="mt-1.5">
+              <div className="mt-1">
                 <ScoreDisplay score={score} className="text-base" />
               </div>
             ) : tier ? (
-              <p className="text-xs italic text-foreground/40 mt-1">
+              <p className="text-xs italic text-foreground/40 mt-0.5">
                 {TIER_LABELS[tier as Tier] ?? tier}
               </p>
             ) : null
@@ -216,7 +223,7 @@ function FeedItem({
             <Image src={book.coverUrl} alt={`Cover of ${book.title}`} fill sizes="48px" className="object-cover" />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
-              <BookOpen className="size-4 text-muted-foreground opacity-40" />
+              <BookOpen className="size-4 text-muted-foreground opacity-40"  strokeWidth={1.75} />
             </div>
           )}
         </div>
@@ -232,9 +239,10 @@ function FeedItem({
 
       {/* Action row — social (heart/comment) left, save right.
           Heart/comment are display-only this pass; save is the wired toggle.
-          mt-3.5 / pt-3.5 keep the divider symmetric (14px above and below), and the
-          14px below the icons (card py-3.5) matches — even rhythm top to bottom. */}
-      <div className="mt-3.5 pt-3.5 border-t border-border/60 flex items-center justify-between">
+          mt-3 / pt-3 match the card's py-3 so the rhythm is even (12px) top to
+          bottom: 12 above the text block, 12 to the divider, 12 below it, 12 to
+          the card edge — keeps the text block optically centered. */}
+      <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-between">
         {/* Meta tier (/40) — heart/comment icons + counts, same weight as the
             timestamp. The filled (reacted) heart overrides with terracotta. */}
         <div className="flex items-center gap-5 text-foreground/40">
@@ -337,8 +345,8 @@ function lockedNote(status: BookStatus | null, title: string): ToastPayload {
 function Empty() {
   return (
     <div className="px-5 flex flex-col items-center text-center gap-3 py-10">
-      <BookOpen className="size-7 text-foreground/15" strokeWidth={1.5} />
-      <p className="text-sm text-foreground/45 max-w-xs leading-relaxed">
+      <BookOpen className="size-7 text-foreground/15" strokeWidth={1.75} />
+      <p className="text-sm text-foreground/40 max-w-xs leading-relaxed">
         When your friends rank or save books, you’ll see it here.
       </p>
     </div>
@@ -347,16 +355,17 @@ function Empty() {
 
 function FeedItemSkeleton() {
   return (
-    <div className="rounded-2xl border border-border bg-[#FCFBF9] px-4 py-3.5">
+    <div className="rounded-2xl border border-[rgba(31,27,22,0.07)] bg-[#FCFBF9] px-4 py-3">
       <div className="flex gap-3">
         <div className="w-11 aspect-[2/3] rounded-md bg-muted animate-pulse shrink-0" />
         <div className="flex-1 space-y-2 pt-0.5">
           <div className="h-3.5 w-2/3 rounded bg-muted animate-pulse" />
           <div className="h-4 w-4/5 rounded bg-muted animate-pulse" />
+          <div className="h-3 w-1/2 rounded bg-muted animate-pulse" />
           <div className="h-3 w-12 rounded bg-muted animate-pulse" />
         </div>
       </div>
-      <div className="mt-3.5 pt-3.5 border-t border-border/60 flex items-center justify-between">
+      <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-between">
         <div className="flex gap-5">
           <div className="h-4 w-8 rounded bg-muted animate-pulse" />
           <div className="h-4 w-8 rounded bg-muted animate-pulse" />

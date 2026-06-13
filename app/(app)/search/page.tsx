@@ -68,7 +68,7 @@ export default function SearchPage() {
         {/* ── Sticky search bar ─────────────────────────────────────────── */}
         <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3">
           <div className="relative flex items-center">
-            <Search className="absolute left-3 size-4 text-foreground/40 pointer-events-none" />
+            <Search className="absolute left-3 size-4 text-foreground/40 pointer-events-none" strokeWidth={1.75} />
             <input
               ref={inputRef}
               value={query}
@@ -89,7 +89,7 @@ export default function SearchPage() {
                 aria-label="Clear search"
                 className="absolute right-3 text-foreground/40 hover:text-foreground transition-colors"
               >
-                <X className="size-4" />
+                <X className="size-4" strokeWidth={1.75} />
               </button>
             )}
           </div>
@@ -100,12 +100,12 @@ export default function SearchPage() {
           {showPrompt && (
             <div className="flex flex-col items-center justify-center pt-20 gap-3 text-center">
               <div className="size-14 rounded-full flex items-center justify-center" style={{ backgroundColor: "#F0EAE0" }}>
-                <Search className="size-6" style={{ color: "#B7AE9F" }} />
+                <Search className="size-6" style={{ color: "#B7AE9F" }} strokeWidth={1.75} />
               </div>
-              <p className="text-xl text-foreground/80" style={{ fontFamily: "var(--font-serif)" }}>
+              <p className="text-xl text-foreground/70" style={{ fontFamily: "var(--font-serif)" }}>
                 Find your next book
               </p>
-              <p className="text-sm text-foreground/50 max-w-xs leading-relaxed">
+              <p className="text-sm text-foreground/55 max-w-xs leading-relaxed">
                 Search Open Library&apos;s catalogue of millions of books and add them to your shelf.
               </p>
             </div>
@@ -128,7 +128,7 @@ export default function SearchPage() {
               <p className="text-xl text-foreground/70" style={{ fontFamily: "var(--font-serif)" }}>
                 No books found
               </p>
-              <p className="text-sm text-foreground/50">Try a different title or author name.</p>
+              <p className="text-sm text-foreground/55">Try a different title or author name.</p>
             </div>
           )}
 

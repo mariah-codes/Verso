@@ -142,7 +142,7 @@ export default function OnboardingProfile() {
             style={{ backgroundColor: "#9C4A2F" }}
           >
             {uploading
-              ? <Loader2 className="size-4 text-white animate-spin" />
+              ? <Loader2 className="size-4 text-white animate-spin"  strokeWidth={1.75} />
               : <Camera className="size-4 text-white" />}
           </span>
         </button>
@@ -157,14 +157,14 @@ export default function OnboardingProfile() {
           onChange={(e) => setDisplayName(e.target.value)}
           maxLength={50}
           placeholder="Your name"
-          className="w-full rounded-xl border border-border bg-muted/40 px-4 py-3 text-base text-foreground placeholder:text-foreground/30 outline-none focus:border-[#9C4A2F]/50"
+          className="w-full rounded-xl border border-[rgba(31,27,22,0.07)] bg-muted/40 px-4 py-3 text-base text-foreground placeholder:text-foreground/40 outline-none focus:border-[#9C4A2F]/50"
         />
       </label>
 
       {/* Username (editable) */}
       <label className="block">
         <span className="text-xs font-medium text-foreground/55 mb-1.5 block">Username</span>
-        <div className="flex items-center rounded-xl border border-border bg-muted/40 px-4 focus-within:border-[#9C4A2F]/50">
+        <div className="flex items-center rounded-xl border border-[rgba(31,27,22,0.07)] bg-muted/40 px-4 focus-within:border-[#9C4A2F]/50">
           <span className="text-base text-foreground/40">@</span>
           <input
             value={username}
@@ -175,7 +175,7 @@ export default function OnboardingProfile() {
             spellCheck={false}
             className="flex-1 bg-transparent px-1 py-3 text-base text-foreground outline-none"
           />
-          {usernameState === "checking" && <Loader2 className="size-4 text-foreground/30 animate-spin" />}
+          {usernameState === "checking" && <Loader2 className="size-4 text-foreground/40 animate-spin"  strokeWidth={1.75} />}
           {usernameState === "ok" && <span className="text-[#9C4A2F] text-sm">✓</span>}
         </div>
         <span className="block min-h-[18px] mt-1.5 text-[12px] text-[#A8321A]">

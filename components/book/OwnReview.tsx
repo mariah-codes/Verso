@@ -136,7 +136,7 @@ export function OwnReview({
             <button onClick={() => onEdit("private")} className="w-full text-left block">
               <ReviewLabelRow
                 Icon={Lock}
-                iconClassName="text-foreground/45"
+                iconClassName="text-foreground/40"
                 label="Private thoughts"
                 filled
                 hint="Only you"
@@ -152,7 +152,7 @@ export function OwnReview({
           <button onClick={() => onEdit("private")} className="w-full text-left block">
             <ReviewLabelRow
               Icon={Lock}
-              iconClassName="text-foreground/45"
+              iconClassName="text-foreground/40"
               label="Private thoughts"
               filled={false}
               hint="Only you"
@@ -194,7 +194,7 @@ function ReviewLabelRow({
     <div className="flex items-center justify-between gap-2">
       <span className="flex items-center gap-1.5">
         <Icon className={cn("size-4 shrink-0", iconClassName)} style={iconStyle} />
-        <span className="text-[15px] font-medium leading-none text-foreground/75">
+        <span className="text-[15px] font-medium leading-none text-foreground/70">
           {label}
         </span>
         {meta && (
@@ -204,7 +204,7 @@ function ReviewLabelRow({
         )}
       </span>
       {filled ? (
-        <Pencil className="size-4 text-foreground/30" />
+        <Pencil className="size-4 text-foreground/40"  strokeWidth={1.75} />
       ) : (
         <span className="text-[11px] leading-none text-foreground/40">{hint}</span>
       )}

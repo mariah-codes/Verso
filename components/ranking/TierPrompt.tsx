@@ -23,14 +23,14 @@ export function TierPrompt({ bookTitle, coverUrl, onSelect }: TierPromptProps) {
           <Image src={coverUrl} alt={`Cover of ${bookTitle}`} fill sizes="112px" className="object-cover" />
         ) : (
           <div className="absolute inset-0 bg-muted flex items-center justify-center">
-            <BookOpen className="size-8 text-muted-foreground/40" />
+            <BookOpen className="size-8 text-muted-foreground/40"  strokeWidth={1.75} />
           </div>
         )}
       </div>
 
       {/* Prompt */}
       <div className="text-center space-y-1">
-        <p className="text-xs font-semibold tracking-widest uppercase text-foreground/40 font-sans">
+        <p className="text-xs font-medium tracking-widest uppercase text-foreground/40 font-sans">
           How was it?
         </p>
         <h2
@@ -51,8 +51,8 @@ export function TierPrompt({ bookTitle, coverUrl, onSelect }: TierPromptProps) {
           >
             <span className="text-2xl">{emoji}</span>
             <span className="flex flex-col">
-              <span className="text-sm font-semibold text-foreground">{TIER_LABELS[tier]}</span>
-              <span className="text-xs text-foreground/50">{sublabel}</span>
+              <span className="text-sm font-medium text-foreground">{TIER_LABELS[tier]}</span>
+              <span className="text-xs text-foreground/55">{sublabel}</span>
             </span>
           </button>
         ))}

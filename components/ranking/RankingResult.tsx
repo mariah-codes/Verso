@@ -81,7 +81,7 @@ export function RankingResult({
             <Image src={coverUrl} alt={`Cover of ${bookTitle}`} fill sizes="128px" className="object-cover" />
           ) : (
             <div className="absolute inset-0 bg-muted flex items-center justify-center">
-              <BookOpen className="size-8 text-muted-foreground/40" />
+              <BookOpen className="size-8 text-muted-foreground/40"  strokeWidth={1.75} />
             </div>
           )}
         </div>
@@ -121,14 +121,14 @@ export function RankingResult({
           {genre === null ? (
             <div className="space-y-2.5">
               <p className="text-xs text-foreground/40 font-sans tracking-wide">
-                Add a genre? <span className="text-foreground/30">(optional)</span>
+                Add a genre? <span className="text-foreground/40">(optional)</span>
               </p>
               <GenrePicker onSelect={handleSelectGenre} />
             </div>
           ) : (
-            <p className="text-xs text-foreground/45 font-sans">
+            <p className="text-xs text-foreground/40 font-sans">
               Genre · <span className="text-foreground/70">{genre}</span>
-              {savingGenre && <span className="text-foreground/30"> · saving…</span>}
+              {savingGenre && <span className="text-foreground/40"> · saving…</span>}
             </p>
           )}
         </div>

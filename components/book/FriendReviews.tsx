@@ -94,7 +94,7 @@ export function FriendReviews({
 
   return (
     <div className="w-full max-w-sm pt-5 border-t border-border/50">
-      <h3 className="text-[15px] font-medium text-foreground/75 mb-2">Reviews from friends</h3>
+      <h3 className="text-[15px] font-medium text-foreground/70 mb-2">Reviews from friends</h3>
 
       {loading ? (
         <div className="space-y-3">
@@ -149,8 +149,8 @@ export function FriendReviews({
                     </span>
                   ) : null}
                   <ChevronDown
-                    className={`size-4 shrink-0 text-foreground/30 transition-transform ${open ? "rotate-180" : ""}`}
-                  />
+                    className={`size-4 shrink-0 text-foreground/40 transition-transform ${open ? "rotate-180" : ""}`}
+                   strokeWidth={1.75} />
                 </button>
 
                 {open && (

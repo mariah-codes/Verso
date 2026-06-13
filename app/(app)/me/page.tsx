@@ -90,14 +90,14 @@ export default function MePage() {
               aria-label="Edit profile"
               className="p-2 rounded-full text-foreground/40 hover:text-foreground hover:bg-muted transition-colors"
             >
-              <Pencil className="size-[18px]" />
+              <Pencil className="size-[18px]"  strokeWidth={1.75} />
             </Link>
             <button
               onClick={handleLogout}
               aria-label="Log out"
               className="p-2 rounded-full text-foreground/40 hover:text-foreground hover:bg-muted transition-colors"
             >
-              <LogOut className="size-[18px]" />
+              <LogOut className="size-[18px]"  strokeWidth={1.75} />
             </button>
           </div>
 
@@ -107,7 +107,7 @@ export default function MePage() {
             photoUrl={profile?.photoUrl ?? null}
           />
 
-          <p className="text-sm text-foreground/45 italic text-center max-w-xs leading-relaxed">
+          <p className="text-sm text-foreground/40 italic text-center max-w-xs leading-relaxed">
             Your reading taste signature will appear here once you’ve rated a few books.
           </p>
         </div>
@@ -124,8 +124,7 @@ export default function MePage() {
             <button
               onClick={() => handleMarkFinished(book)}
               disabled={markingId === book.userBookId}
-              className="text-xs font-medium underline underline-offset-2 px-0.5 text-left disabled:opacity-40 transition-opacity"
-              style={{ color: "#9C4A2F" }}
+              className="text-xs font-medium text-foreground/70 underline underline-offset-2 px-0.5 text-left disabled:opacity-40 transition-opacity"
             >
               {markingId === book.userBookId ? "Saving…" : "Mark finished"}
             </button>

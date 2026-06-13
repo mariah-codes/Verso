@@ -55,6 +55,9 @@
   --background: #FAF8F4;
   --foreground: #1F1B16;
   --accent: #9C4A2F;
+  /* Soft card edge — applied as the literal arbitrary value
+     border-[rgba(31,27,22,0.07)] on content surfaces (feed cards, book-detail
+     sections, settings/onboarding cards), replacing harsh grey outlines. */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);

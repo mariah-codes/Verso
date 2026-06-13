@@ -93,13 +93,13 @@ export default function ResetPasswordPage() {
         <div className="flex flex-col items-center gap-2 pt-2">
           <Link
             href="/forgot-password"
-            className="text-sm text-foreground/50 underline underline-offset-4 hover:text-foreground/70 transition-colors"
+            className="text-sm text-foreground/55 underline underline-offset-4 hover:text-foreground/70 transition-colors"
           >
             Send a new link
           </Link>
           <Link
             href="/sign-in"
-            className="text-sm text-foreground/50 underline underline-offset-4 hover:text-foreground/70 transition-colors"
+            className="text-sm text-foreground/55 underline underline-offset-4 hover:text-foreground/70 transition-colors"
           >
             Back to sign in
           </Link>

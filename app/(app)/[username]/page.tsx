@@ -56,9 +56,9 @@ function UserNotFound({ username }: { username: string }) {
       <div className="px-3 py-3">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1 text-foreground/50 hover:text-foreground transition-colors"
+          className="flex items-center gap-1 text-foreground/55 hover:text-foreground transition-colors"
         >
-          <ChevronLeft className="size-5" />
+          <ChevronLeft className="size-5"  strokeWidth={1.75} />
           <span className="text-sm">Back</span>
         </button>
       </div>
@@ -69,7 +69,7 @@ function UserNotFound({ username }: { username: string }) {
         >
           No one here
         </h1>
-        <p className="text-sm text-foreground/50 leading-relaxed max-w-xs">
+        <p className="text-sm text-foreground/55 leading-relaxed max-w-xs">
           We couldn’t find a reader at{" "}
           <span className="font-medium text-foreground/70">@{username}</span>.
           The handle may have changed, or the link’s off.
@@ -90,8 +90,8 @@ function ResolveLoading() {
   return (
     <div className="min-h-screen bg-background">
       <div className="px-3 py-3">
-        <div className="flex items-center gap-1 text-foreground/30">
-          <ChevronLeft className="size-5" />
+        <div className="flex items-center gap-1 text-foreground/40">
+          <ChevronLeft className="size-5"  strokeWidth={1.75} />
           <span className="text-sm">Back</span>
         </div>
       </div>

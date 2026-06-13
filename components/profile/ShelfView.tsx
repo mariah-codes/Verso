@@ -86,9 +86,9 @@ export function ShelfView({ userId, isOwn }: ShelfViewProps) {
       <div className="sticky top-0 z-20 bg-background/90 backdrop-blur-sm px-5 pt-5 pb-0">
         {isOwn ? (
           <div className="flex items-center gap-2">
-            <LibraryBig className="size-4 text-foreground/40 shrink-0" />
+            <LibraryBig className="size-4 text-foreground/40 shrink-0"  strokeWidth={1.75} />
             <h1
-              className="text-2xl text-foreground/80"
+              className="text-2xl text-foreground/70"
               style={{ fontFamily: "var(--font-serif)" }}
             >
               Your shelf
@@ -99,9 +99,9 @@ export function ShelfView({ userId, isOwn }: ShelfViewProps) {
             <button
               onClick={() => router.back()}
               aria-label="Back"
-              className="-ml-1 p-1 text-foreground/50 hover:text-foreground transition-colors"
+              className="-ml-1 p-1 text-foreground/55 hover:text-foreground transition-colors"
             >
-              <ChevronLeft className="size-5" />
+              <ChevronLeft className="size-5"  strokeWidth={1.75} />
             </button>
             <h1
               className="text-xl text-foreground truncate"
@@ -187,8 +187,8 @@ function TabButton({
       className={[
         "pb-2.5 text-sm transition-colors whitespace-nowrap",
         active
-          ? "font-semibold border-b-2 -mb-px"
-          : "font-normal text-foreground/45 border-b-2 border-transparent",
+          ? "font-medium border-b-2 -mb-px"
+          : "font-normal text-foreground/40 border-b-2 border-transparent",
       ].join(" ")}
       style={active ? { color: "#9C4A2F", borderColor: "#9C4A2F" } : undefined}
     >

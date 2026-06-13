@@ -32,6 +32,9 @@ export default function ForgotPasswordPage() {
   const [serverError, setServerError] = useState<string | null>(null)
   const [emailSent, setEmailSent] = useState(false)
   const [resendState, setResendState] = useState<"idle" | "sending" | "sent">("idle")
+  // Surfaced on the "Check your email" screen — resend hits a Supabase 429 when
+  // requested too often; show friendly copy rather than failing silently.
+  const [resendError, setResendError] = useState<string | null>(null)
 
   const form = useForm<ForgotValues>({
     resolver: zodResolver(forgotSchema),
@@ -63,11 +66,19 @@ export default function ForgotPasswordPage() {
   async function resend() {
     if (resendState === "sending") return
     setResendState("sending")
+    setResendError(null)
     const { error } = await supabase.auth.resetPasswordForEmail(form.getValues("email"), {
       redirectTo: redirectTo(),
     })
     if (error) {
-      setServerError(error.message)
+      const rateLimited =
+        error.status === 429 ||
+        /rate limit|too many|after \d+ seconds|security purposes/i.test(error.message)
+      setResendError(
+        rateLimited
+          ? "That’s a bit too soon — give it a minute, then try resending."
+          : "Couldn’t resend just now. Try again in a moment.",
+      )
       setResendState("idle")
       return
     }
@@ -93,12 +104,16 @@ export default function ForgotPasswordPage() {
           . Click it to choose a new password.
         </p>
 
+        {resendError && (
+          <p className="text-sm text-destructive">{resendError}</p>
+        )}
+
         <div className="flex flex-col items-center gap-2 pt-2">
           <button
             type="button"
             onClick={resend}
             disabled={resendState === "sending"}
-            className="text-sm text-foreground/50 underline underline-offset-4 hover:text-foreground/70 transition-colors disabled:opacity-50"
+            className="text-sm text-foreground/55 underline underline-offset-4 hover:text-foreground/70 transition-colors disabled:opacity-50"
           >
             {resendState === "sending"
               ? "Resending…"
@@ -108,7 +123,7 @@ export default function ForgotPasswordPage() {
           </button>
           <Link
             href="/sign-in"
-            className="text-sm text-foreground/50 underline underline-offset-4 hover:text-foreground/70 transition-colors"
+            className="text-sm text-foreground/55 underline underline-offset-4 hover:text-foreground/70 transition-colors"
           >
             Back to sign in
           </Link>
@@ -170,8 +185,7 @@ export default function ForgotPasswordPage() {
         Remembered it?{" "}
         <Link
           href="/sign-in"
-          className="font-medium underline underline-offset-4"
-          style={{ color: "#9C4A2F" }}
+          className="font-medium text-foreground/70 underline underline-offset-4"
         >
           Sign in
         </Link>

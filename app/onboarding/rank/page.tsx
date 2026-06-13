@@ -288,8 +288,8 @@ export default function OnboardingRank() {
             >
               <span className="text-2xl">{TIER_META[t].emoji}</span>
               <span className="flex flex-col">
-                <span className="text-sm font-semibold text-foreground">{TIER_LABELS[t]}</span>
-                <span className="text-xs text-foreground/50">{TIER_META[t].sublabel}</span>
+                <span className="text-sm font-medium text-foreground">{TIER_LABELS[t]}</span>
+                <span className="text-xs text-foreground/55">{TIER_META[t].sublabel}</span>
               </span>
             </button>
           ))}
@@ -315,7 +315,7 @@ export default function OnboardingRank() {
       <div className="flex-1 flex flex-col">
         {battle ? (
           <div className="flex-1 flex flex-col items-center px-5 pt-8 pb-8 gap-6">
-            <p className="text-xs font-semibold tracking-widest uppercase text-foreground/40 font-sans text-center">
+            <p className="text-xs font-medium tracking-widest uppercase text-foreground/40 font-sans text-center">
               Which did you love more?
             </p>
             {/* Left = the already-placed pivot, right = the new book (accent) —
@@ -347,7 +347,7 @@ export default function OnboardingRank() {
   // DONE
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-5 text-center">
-      <Library className="size-9 mb-4" style={{ color: "#9C4A2F" }} strokeWidth={1.5} />
+      <Library className="size-9 mb-4" style={{ color: "#9C4A2F" }} strokeWidth={1.75} />
       <h2 className="text-3xl text-foreground leading-tight" style={{ fontFamily: "var(--font-serif)" }}>Your shelf is ranked</h2>
       <p className="text-sm text-foreground/55 mt-2 mb-8">{done.count} {done.count === 1 ? "book" : "books"}, in your order.</p>
 
@@ -357,7 +357,7 @@ export default function OnboardingRank() {
             <div className="relative w-[84px] aspect-[2/3] rounded-lg overflow-hidden shadow-md bg-muted">
               {b.coverUrl
                 ? <Image src={b.coverUrl} alt="" fill sizes="84px" className="object-cover" unoptimized />
-                : <span className="absolute inset-0 flex items-center justify-center"><BookOpen className="size-5 text-muted-foreground opacity-40" /></span>}
+                : <span className="absolute inset-0 flex items-center justify-center"><BookOpen className="size-5 text-muted-foreground opacity-40"  strokeWidth={1.75} /></span>}
             </div>
             <span className="text-base" style={{ color: "#9C4A2F", fontFamily: "var(--font-serif)", fontWeight: 500 }}>#{i + 1}</span>
           </div>
@@ -391,7 +391,7 @@ function BattleCover({ cover, title, onPick, accent }: { cover: string | null; t
       >
         {cover
           ? <Image src={cover} alt="" fill sizes="120px" className="object-cover" unoptimized />
-          : <span className="absolute inset-0 flex items-center justify-center bg-muted"><BookOpen className="size-6 text-muted-foreground opacity-40" /></span>}
+          : <span className="absolute inset-0 flex items-center justify-center bg-muted"><BookOpen className="size-6 text-muted-foreground opacity-40"  strokeWidth={1.75} /></span>}
       </div>
       <span className="text-xs text-foreground/55 text-center leading-snug line-clamp-2">{title}</span>
     </button>
@@ -408,7 +408,7 @@ function ConfirmOverlay({ title, body, confirmLabel, onConfirm, onCancel }: {
         <p className="text-sm text-foreground/55 mt-1.5">{body}</p>
         <div className="mt-5 flex flex-col gap-2">
           <button onClick={onConfirm} className="w-full rounded-xl py-3 text-sm font-medium text-white" style={{ backgroundColor: "#9C4A2F" }}>{confirmLabel}</button>
-          <button onClick={onCancel} className="w-full rounded-xl py-3 text-sm text-foreground/50">Keep going</button>
+          <button onClick={onCancel} className="w-full rounded-xl py-3 text-sm text-foreground/55">Keep going</button>
         </div>
       </div>
     </div>

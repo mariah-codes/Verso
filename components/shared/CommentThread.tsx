@@ -154,7 +154,7 @@ export function CommentThread({
               <div className="flex-1 min-w-0">
                 {/* One continuous block: bold name, then the comment inline. */}
                 <p className="text-[14px] leading-relaxed text-foreground/70 whitespace-pre-line">
-                  <span className="font-semibold text-foreground">{firstName(c.displayName)}</span>{" "}
+                  <span className="font-medium text-foreground">{firstName(c.displayName)}</span>{" "}
                   {c.text}
                 </p>
                 {/* Meta row — quiet, left-aligned, at the /40 tier. */}
@@ -190,7 +190,7 @@ export function CommentThread({
             // is scrolled into view it rests just above the keyboard, not behind
             // it (the page has room to scroll — see app/(app)/layout.tsx).
             style={{ scrollMarginBottom: "calc(var(--keyboard-inset, 0px) + 0.75rem)" }}
-            className="flex-1 min-w-0 rounded-full border border-input bg-muted/50 px-3.5 py-2 text-[14px] text-foreground placeholder:text-foreground/30 outline-none focus:border-ring disabled:opacity-50"
+            className="flex-1 min-w-0 rounded-full border border-input bg-muted/50 px-3.5 py-2 text-[14px] text-foreground placeholder:text-foreground/40 outline-none focus:border-ring disabled:opacity-50"
           />
           <button
             type="button"

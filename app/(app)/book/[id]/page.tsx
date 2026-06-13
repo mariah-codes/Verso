@@ -509,7 +509,7 @@ export default function BookPage() {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-3 px-6">
         <p className="text-sm text-foreground/40">Book not found.</p>
-        <button onClick={() => router.back()} className="text-sm underline underline-offset-2 text-foreground/50">
+        <button onClick={() => router.back()} className="text-sm underline underline-offset-2 text-foreground/55">
           Go back
         </button>
       </div>
@@ -525,9 +525,9 @@ export default function BookPage() {
         <div className="sticky top-0 z-20 bg-background/90 backdrop-blur-sm px-3 py-3">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-1 text-foreground/50 hover:text-foreground transition-colors"
+            className="flex items-center gap-1 text-foreground/55 hover:text-foreground transition-colors"
           >
-            <ChevronLeft className="size-5" />
+            <ChevronLeft className="size-5"  strokeWidth={1.75} />
             <span className="text-sm">Back</span>
           </button>
         </div>
@@ -546,7 +546,7 @@ export default function BookPage() {
 
           {/* ── Title / author ──────────────────────────────────────────────── */}
           <div className="text-center space-y-1 w-full max-w-xs">
-            <h1 className="text-2xl text-foreground leading-snug" style={{ fontFamily: "var(--font-serif)" }}>
+            <h1 className="text-[25px] text-foreground leading-tight tracking-[0.01em]" style={{ fontFamily: "var(--font-serif)" }}>
               {book.title}
             </h1>
             <p className="text-sm text-foreground/55">
@@ -581,8 +581,7 @@ export default function BookPage() {
                     <button
                       onClick={handleRerank}
                       disabled={reranking || changingStatus}
-                      className="text-sm font-medium underline underline-offset-2 disabled:opacity-40 transition-opacity"
-                      style={{ color: "#9C4A2F" }}
+                      className="text-sm font-medium text-foreground/70 underline underline-offset-2 disabled:opacity-40 transition-opacity"
                     >
                       {reranking ? "Clearing…" : "Re-rank"}
                     </button>
@@ -609,8 +608,7 @@ export default function BookPage() {
                   <button
                     onClick={() => setGenreEditing(true)}
                     disabled={savingGenre}
-                    className="text-sm font-medium underline underline-offset-2 disabled:opacity-40 transition-opacity"
-                    style={{ color: "#9C4A2F" }}
+                    className="text-sm font-medium text-foreground/70 underline underline-offset-2 disabled:opacity-40 transition-opacity"
                   >
                     Edit
                   </button>
@@ -618,8 +616,7 @@ export default function BookPage() {
               ) : (
                 <button
                   onClick={() => setGenreEditing(true)}
-                  className="text-sm font-medium underline underline-offset-2"
-                  style={{ color: "#9C4A2F" }}
+                  className="text-sm font-medium text-foreground/70 underline underline-offset-2"
                 >
                   + Add genre
                 </button>
@@ -640,17 +637,17 @@ export default function BookPage() {
                     "text-sm font-medium disabled:opacity-50",
                     statusOpen
                       ? "border-[#9C4A2F]/50 bg-[#9C4A2F]/5 text-[#9C4A2F]"
-                      : "border-border bg-muted/40 text-foreground/70 hover:border-foreground/20",
+                      : "border-[rgba(31,27,22,0.07)] bg-muted/40 text-foreground/70 hover:border-foreground/20",
                   ].join(" ")}
                 >
                   <span className="flex items-center gap-2">
-                    {!changingStatus && (() => { const TriggerIcon = STATUS_ICON[userBook.status]; return <TriggerIcon className="size-4 shrink-0" /> })()}
+                    {!changingStatus && (() => { const TriggerIcon = STATUS_ICON[userBook.status]; return <TriggerIcon className="size-4 shrink-0" strokeWidth={1.75} /> })()}
                     {changingStatus ? "Saving…" : STATUS_OPTION_LABEL[userBook.status]}
                   </span>
                   <svg
                     viewBox="0 0 16 16"
-                    className={`size-4 transition-transform ${statusOpen ? "rotate-180 text-[#9C4A2F]" : "text-foreground/30"}`}
-                    fill="none" stroke="currentColor" strokeWidth="1.5"
+                    className={`size-4 transition-transform ${statusOpen ? "rotate-180 text-[#9C4A2F]" : "text-foreground/40"}`}
+                    fill="none" stroke="currentColor" strokeWidth="1.75"
                   >
                     <path d="M4 6l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -658,7 +655,7 @@ export default function BookPage() {
 
                 {/* Inline options — slide open */}
                 {statusOpen && (
-                  <div className="rounded-xl border border-border overflow-hidden">
+                  <div className="rounded-xl border border-[rgba(31,27,22,0.07)] overflow-hidden">
                     {STATUS_DROPDOWN_OPTIONS.map(({ status, label, Icon }) => {
                       const active = status === userBook.status
                       return (
@@ -673,7 +670,7 @@ export default function BookPage() {
                               : "bg-background text-foreground/70 hover:bg-muted/40",
                           ].join(" ")}
                         >
-                          <Icon className="size-4 shrink-0" />
+                          <Icon className="size-4 shrink-0" strokeWidth={1.75} />
                           {label}
                         </button>
                       )
@@ -727,13 +724,13 @@ export default function BookPage() {
                       ? setConfirmRemove(true)
                       : handleRemove()
                   }}
-                  className="text-xs text-foreground/35 hover:text-foreground/60 transition-colors underline underline-offset-2"
+                  className="text-xs text-foreground/40 hover:text-foreground/60 transition-colors underline underline-offset-2"
                 >
                   Remove from shelf
                 </button>
               ) : (
                 <div className="flex items-center gap-4">
-                  <span className="text-xs text-foreground/50">Remove this book?</span>
+                  <span className="text-xs text-foreground/55">Remove this book?</span>
                   <button
                     onClick={handleRemove}
                     disabled={removing}
@@ -760,7 +757,7 @@ export default function BookPage() {
             <div className="w-full max-w-sm flex justify-center">
               <button
                 onClick={() => setStopOpen(true)}
-                className="inline-flex items-center gap-1.5 text-xs text-foreground/60 hover:text-foreground/80 underline underline-offset-4 transition-colors"
+                className="inline-flex items-center gap-1.5 text-xs text-foreground/60 hover:text-foreground/70 underline underline-offset-4 transition-colors"
               >
                 <CircleX className="size-3.5 shrink-0" strokeWidth={1.75} />
                 Stop reading
@@ -872,8 +869,8 @@ function Skeleton({ onBack }: { onBack: () => void }) {
   return (
     <div className="min-h-screen bg-background">
       <div className="px-3 py-3">
-        <button onClick={onBack} className="flex items-center gap-1 text-foreground/50">
-          <ChevronLeft className="size-5" /><span className="text-sm">Back</span>
+        <button onClick={onBack} className="flex items-center gap-1 text-foreground/55">
+          <ChevronLeft className="size-5"  strokeWidth={1.75} /><span className="text-sm">Back</span>
         </button>
       </div>
       <div className="px-5 pb-16 flex flex-col items-center gap-5">

@@ -36,7 +36,7 @@ export function ClampText({ text, className, fadeColor }: ClampTextProps) {
         <button
           type="button"
           onClick={() => setExpanded(false)}
-          className="font-medium text-foreground/45 hover:text-foreground/70 transition-colors"
+          className="font-medium text-foreground/40 hover:text-foreground/70 transition-colors"
         >
           less
         </button>
@@ -58,7 +58,7 @@ export function ClampText({ text, className, fadeColor }: ClampTextProps) {
           // End of line 3. The left fade masks the clamped text + the browser's
           // own ellipsis; we render our own "… more" so the ellipsis is visible
           // and the SAME muted color as "more", inline on one row.
-          className="absolute bottom-0 right-0 pl-8 text-foreground/45 hover:text-foreground/70 transition-colors"
+          className="absolute bottom-0 right-0 pl-8 text-foreground/40 hover:text-foreground/70 transition-colors"
           style={{ background: `linear-gradient(to right, transparent, ${fadeColor} 1.75rem)` }}
         >
           <span aria-hidden>… </span>

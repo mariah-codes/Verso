@@ -41,6 +41,9 @@ export default function SignUpPage() {
   const [serverError, setServerError] = useState<string | null>(null)
   const [emailSent, setEmailSent] = useState(false)
   const [resendState, setResendState] = useState<"idle" | "sending" | "sent">("idle")
+  // Surfaced on the "Check your email" screen — Supabase returns a 429 if resend
+  // is hit too often, which must read as friendly copy, not a silent no-op.
+  const [resendError, setResendError] = useState<string | null>(null)
 
   const form = useForm<SignUpValues>({
     resolver: zodResolver(signUpSchema),
@@ -79,6 +82,7 @@ export default function SignUpPage() {
   async function resendConfirmation() {
     if (resendState === "sending") return
     setResendState("sending")
+    setResendError(null)
     const { error } = await supabase.auth.resend({
       type: "signup",
       email: form.getValues("email"),
@@ -87,7 +91,7 @@ export default function SignUpPage() {
       },
     })
     if (error) {
-      setServerError(error.message)
+      setResendError(friendlyResendError(error))
       setResendState("idle")
       return
     }
@@ -100,6 +104,7 @@ export default function SignUpPage() {
   function useDifferentEmail() {
     setEmailSent(false)
     setResendState("idle")
+    setResendError(null)
     setServerError(null)
     form.reset()
   }
@@ -134,13 +139,18 @@ export default function SignUpPage() {
           . Click it to finish creating your account.
         </p>
 
+        {/* Rate-limit / resend failure — friendly, never a silent no-op. */}
+        {resendError && (
+          <p className="text-sm text-destructive">{resendError}</p>
+        )}
+
         {/* Escape hatches for a mistyped address — minimal ghost links. */}
         <div className="flex flex-col items-center gap-2 pt-2">
           <button
             type="button"
             onClick={resendConfirmation}
             disabled={resendState === "sending"}
-            className="text-sm text-foreground/50 underline underline-offset-4 hover:text-foreground/70 transition-colors disabled:opacity-50"
+            className="text-sm text-foreground/55 underline underline-offset-4 hover:text-foreground/70 transition-colors disabled:opacity-50"
           >
             {resendState === "sending"
               ? "Resending…"
@@ -151,10 +161,16 @@ export default function SignUpPage() {
           <button
             type="button"
             onClick={useDifferentEmail}
-            className="text-sm text-foreground/50 underline underline-offset-4 hover:text-foreground/70 transition-colors"
+            className="text-sm text-foreground/55 underline underline-offset-4 hover:text-foreground/70 transition-colors"
           >
             Use a different email
           </button>
+          <Link
+            href="/sign-in"
+            className="text-sm text-foreground/55 underline underline-offset-4 hover:text-foreground/70 transition-colors"
+          >
+            Back to sign in
+          </Link>
         </div>
       </div>
     )
@@ -262,14 +278,26 @@ export default function SignUpPage() {
         Already have an account?{" "}
         <Link
           href="/sign-in"
-          className="font-medium underline underline-offset-4"
-          style={{ color: "#9C4A2F" }}
+          className="font-medium text-foreground/70 underline underline-offset-4"
         >
           Sign in
         </Link>
       </p>
     </div>
   )
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Map a resend AuthError to friendly copy. Supabase returns a 429 (often "For
+ *  security purposes… after N seconds") when resend is hit too frequently. */
+function friendlyResendError(error: { status?: number; message: string }): string {
+  const rateLimited =
+    error.status === 429 ||
+    /rate limit|too many|after \d+ seconds|security purposes/i.test(error.message)
+  return rateLimited
+    ? "That’s a bit too soon — give it a minute, then try resending."
+    : "Couldn’t resend just now. Try again in a moment."
 }
 
 // ── Google SVG icon ───────────────────────────────────────────────────────────

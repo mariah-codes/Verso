@@ -51,7 +51,7 @@ export function StopReadingSheet({
           >
             Stop reading this?
           </DrawerTitle>
-          <DrawerDescription className="text-left text-foreground/50">
+          <DrawerDescription className="text-left text-foreground/55">
             You can pick it back up anytime.
           </DrawerDescription>
         </DrawerHeader>
@@ -117,10 +117,10 @@ function OptionRow({
     >
       <Icon className="size-5 shrink-0 text-foreground/55" strokeWidth={1.75} />
       <span className="min-w-0">
-        <span className="block text-sm font-medium text-foreground/80 leading-snug">
+        <span className="block text-sm font-medium text-foreground/70 leading-snug">
           {title}
         </span>
-        <span className="block text-xs text-foreground/45 leading-snug mt-0.5">
+        <span className="block text-xs text-foreground/40 leading-snug mt-0.5">
           {subtitle}
         </span>
       </span>

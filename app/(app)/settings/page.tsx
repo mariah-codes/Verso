@@ -188,9 +188,9 @@ export default function SettingsPage() {
       <div className="sticky top-0 z-20 bg-background/90 backdrop-blur-sm px-3 py-3">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1 text-foreground/50 hover:text-foreground transition-colors"
+          className="flex items-center gap-1 text-foreground/55 hover:text-foreground transition-colors"
         >
-          <ChevronLeft className="size-5" />
+          <ChevronLeft className="size-5"  strokeWidth={1.75} />
           <span className="text-sm">Back</span>
         </button>
       </div>
@@ -210,13 +210,13 @@ export default function SettingsPage() {
               onChange={(e) => { setDisplayName(e.target.value); setProfileMsg(null) }}
               maxLength={50}
               placeholder="Your name"
-              className="w-full rounded-xl border border-border bg-muted/40 px-4 py-3 text-base text-foreground placeholder:text-foreground/30 outline-none focus:border-[#9C4A2F]/50"
+              className="w-full rounded-xl border border-[rgba(31,27,22,0.07)] bg-muted/40 px-4 py-3 text-base text-foreground placeholder:text-foreground/40 outline-none focus:border-[#9C4A2F]/50"
             />
           </Field>
 
           {/* Username */}
           <Field label="Username">
-            <div className="flex items-center rounded-xl border border-border bg-muted/40 px-4 focus-within:border-[#9C4A2F]/50">
+            <div className="flex items-center rounded-xl border border-[rgba(31,27,22,0.07)] bg-muted/40 px-4 focus-within:border-[#9C4A2F]/50">
               <span className="text-base text-foreground/40">@</span>
               <input
                 value={username}
@@ -230,7 +230,7 @@ export default function SettingsPage() {
                 spellCheck={false}
                 className="flex-1 bg-transparent px-1 py-3 text-base text-foreground outline-none"
               />
-              {usernameState === "checking" && <Loader2 className="size-4 text-foreground/30 animate-spin" />}
+              {usernameState === "checking" && <Loader2 className="size-4 text-foreground/40 animate-spin"  strokeWidth={1.75} />}
               {usernameState === "ok" && <span className="text-[#9C4A2F] text-sm">✓</span>}
             </div>
             {usernameState === "error" && (
@@ -255,7 +255,7 @@ export default function SettingsPage() {
           {/* Email */}
           <Field label="Email">
             <p className="text-sm text-foreground/55 mb-2">
-              Current: <span className="text-foreground/80">{currentEmail}</span>
+              Current: <span className="text-foreground/70">{currentEmail}</span>
             </p>
             <input
               type="email"
@@ -265,7 +265,7 @@ export default function SettingsPage() {
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
-              className="w-full rounded-xl border border-border bg-muted/40 px-4 py-3 text-base text-foreground placeholder:text-foreground/30 outline-none focus:border-[#9C4A2F]/50"
+              className="w-full rounded-xl border border-[rgba(31,27,22,0.07)] bg-muted/40 px-4 py-3 text-base text-foreground placeholder:text-foreground/40 outline-none focus:border-[#9C4A2F]/50"
             />
             <button
               onClick={handleChangeEmail}
@@ -287,7 +287,7 @@ export default function SettingsPage() {
                 value={newPassword}
                 onChange={(e) => { setNewPassword(e.target.value); setPwMsg(null); setPwError(null) }}
                 placeholder="New password (8+ characters)"
-                className="w-full rounded-xl border border-border bg-muted/40 px-4 py-3 text-base text-foreground placeholder:text-foreground/30 outline-none focus:border-[#9C4A2F]/50"
+                className="w-full rounded-xl border border-[rgba(31,27,22,0.07)] bg-muted/40 px-4 py-3 text-base text-foreground placeholder:text-foreground/40 outline-none focus:border-[#9C4A2F]/50"
               />
               <button
                 onClick={handleChangePassword}
@@ -310,7 +310,7 @@ export default function SettingsPage() {
             <button
               onClick={handleSignOut}
               disabled={signingOut}
-              className="w-full rounded-xl border border-border bg-muted/40 py-3.5 text-base font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+              className="w-full rounded-xl border border-[rgba(31,27,22,0.07)] bg-muted/40 py-3.5 text-base font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-50"
             >
               {signingOut ? "Signing out…" : "Sign out"}
             </button>
@@ -335,7 +335,7 @@ export default function SettingsPage() {
             >
               Delete account
             </DrawerTitle>
-            <DrawerDescription className="text-left text-foreground/50">
+            <DrawerDescription className="text-left text-foreground/55">
               This will permanently delete your account and all your data. This cannot be undone.
             </DrawerDescription>
           </DrawerHeader>
@@ -370,7 +370,7 @@ export default function SettingsPage() {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-xs font-semibold tracking-widest uppercase text-foreground/55 font-sans">
+    <h2 className="text-xs font-medium tracking-widest uppercase text-foreground/60 font-sans">
       {children}
     </h2>
   )

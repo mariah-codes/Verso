@@ -10,13 +10,13 @@ interface ScoreDisplayProps {
 
 /**
  * Single source of truth for score rendering across the app.
- * Always: EB Garamond serif · terracotta #9C4A2F · bold · tabular-nums
+ * Always: EB Garamond serif · terracotta #9C4A2F · medium · tabular-nums
  * Caller controls size via className.
  */
 export function ScoreDisplay({ score, className }: ScoreDisplayProps) {
   return (
     <span
-      className={cn("font-bold tabular-nums", className)}
+      className={cn("font-medium tabular-nums", className)}
       style={{ fontFamily: "var(--font-serif)", color: "#9C4A2F" }}
     >
       {formatScore(score)}

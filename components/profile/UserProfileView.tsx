@@ -109,7 +109,7 @@ export function UserProfileView({ targetId }: { targetId: string }) {
         <p className="text-sm text-foreground/40">Profile not found.</p>
         <button
           onClick={() => router.back()}
-          className="text-sm underline underline-offset-2 text-foreground/50"
+          className="text-sm underline underline-offset-2 text-foreground/55"
         >
           Go back
         </button>
@@ -130,9 +130,9 @@ export function UserProfileView({ targetId }: { targetId: string }) {
       <div className="sticky top-0 z-20 bg-background/90 backdrop-blur-sm px-3 py-3">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1 text-foreground/50 hover:text-foreground transition-colors"
+          className="flex items-center gap-1 text-foreground/55 hover:text-foreground transition-colors"
         >
-          <ChevronLeft className="size-5" />
+          <ChevronLeft className="size-5"  strokeWidth={1.75} />
           <span className="text-sm">Back</span>
         </button>
       </div>
@@ -147,7 +147,7 @@ export function UserProfileView({ targetId }: { targetId: string }) {
         />
 
         {/* Taste signature placeholder — same copy as /me */}
-        <p className="text-sm text-foreground/45 italic text-center max-w-xs leading-relaxed">
+        <p className="text-sm text-foreground/40 italic text-center max-w-xs leading-relaxed">
           Taste signature coming soon.
         </p>
 
@@ -281,8 +281,8 @@ function PageSkeleton({ onBack }: { onBack: () => void }) {
   return (
     <div className="min-h-screen bg-background">
       <div className="px-3 py-3">
-        <button onClick={onBack} className="flex items-center gap-1 text-foreground/50">
-          <ChevronLeft className="size-5" />
+        <button onClick={onBack} className="flex items-center gap-1 text-foreground/55">
+          <ChevronLeft className="size-5"  strokeWidth={1.75} />
           <span className="text-sm">Back</span>
         </button>
       </div>
