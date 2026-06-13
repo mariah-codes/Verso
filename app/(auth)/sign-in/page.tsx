@@ -45,7 +45,7 @@ export default function SignInPage() {
 function SignInForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const oauthError = searchParams.get("error")
+  const authError = searchParams.get("error")
   const [serverError, setServerError] = useState<string | null>(null)
 
   const form = useForm<SignInValues>({
@@ -104,10 +104,11 @@ function SignInForm() {
         </p>
       </div>
 
-      {/* OAuth error banner (redirected back from failed callback) */}
-      {oauthError && (
+      {/* Auth error banner (redirected back from a failed callback — could be
+          OAuth or an expired/used email-confirmation link, so keep it generic) */}
+      {authError && (
         <p className="text-sm text-destructive text-center bg-destructive/5 rounded-lg py-2 px-3">
-          Something went wrong with Google sign-in. Please try again.
+          We couldn’t complete sign-in. Please try again.
         </p>
       )}
 
