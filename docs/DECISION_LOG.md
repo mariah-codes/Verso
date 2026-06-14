@@ -6,6 +6,34 @@ Most recent first. Each entry: date, decision, reasoning.
 
 ---
 
+## 2026-06-12
+
+**Book metadata refreshes on re-add — the books upsert switched from `ignoreDuplicates` to DO UPDATE.** On an existing `open_library_id` the Search upsert now refreshes title/author/cover_url/published_year, backed by a new `books: authenticated update` RLS policy. Books added before the English-edition heuristic kept stale foreign-canonical metadata forever (e.g. a Kundera row stuck on a French Folio cover); now any signed-in user re-adding a book self-heals its metadata for everyone — metadata stays globally shared, one row per work.
+
+**Search quality hardened: a four-layer defense plus a curated-cover override.** (1) English-edition heuristic (`lang=en` + editions sub-doc) so the canonical title/cover isn't a foreign-language edition; (2) junk-title demotion; (3) normalized dedup — lowercase, strip a leading "the", punctuation, and trailing Volume/Part suffixes, then collapse same-title+author to the highest-edition-count work; (4) an authorless/Anonymous hard filter. The 51 onboarding books additionally reuse their hand-verified covers by work key when they appear in Search, so curated titles never regress to a bad auto-pulled cover.
+
+**Feed reaction enum renamed flame→heart.** The `reaction_type` enum value `flame` became `heart` (the 2026-06-10 two-icon move, now committed at the DB level); `smile` stays dormant and self-reactions are allowed (you can heart your own event).
+
+**Follow toggle is now DB-confirmed after every action.** Each follow/unfollow does an idempotent upsert/delete and reads the follows-table state back, settling the button on the confirmed value — fixes optimistic-state drift where a re-follow that didn't persist could leave the pill stuck on "Following."
+
+**Auth callback now handles the email-confirmation flow, not just OAuth.** The callback verifies `token_hash`+`type` via `verifyOtp` (signup confirmation, magic link, recovery, email-change) in addition to OAuth `code` exchange — email confirmation previously fell through to a wrong, Google-specific error even though the account was created. Error copy is now generic, and after the session is established the route redirects by `onboarded_at` (null → /onboarding/profile, else → /home), with recovery links preserved to /reset-password.
+
+---
+
+## 2026-06-11
+
+**Brand system finalized.** EB Garamond throughout (wordmark + app type), terracotta `#9C4A2F` as the ground for the OG share card, an abstract open-book line mark (a near-horizontal cusped line) as the secondary motif, and a "V" lettermark for the icon/favicon. Tagline: "Reading is better with friends."
+
+**Onboarding ranking built as a game shell, NOT the in-app RankingFlow component.** Tier sweep → battle stream → celebration beat, reusing only the math in `lib/ranking.ts` (no fork of the persistence or the in-app ranking UI). Two-level escapes ("finish later" / "good enough — finish up"), no half-states — a finished book always lands with a tier. Confirmed "feels like a breeze" in testing.
+
+**Goodreads CSV import deferred from onboarding to a future Settings entry.** It added friction to the first run and the import surface belongs in Settings, not the 90-second onboarding path. Parked, not cut.
+
+**Onboarding book grid: 51 books (17×3).** Curated for mixed-demographic recognition after two rebalancing passes; every title resolves to a real Open Library work key, giving edition-proof identity so taste-match dedup treats a grid book and a Search-added copy as one book.
+
+**Landing screen rebuilt.** Cream ground, the brand open-book line mark above the wordmark, and the new tagline — replacing the old "YOUR BOOKSHELF, SHARED" line.
+
+---
+
 ## 2026-06-10
 
 **Comments attach to reviews (public notes), not to bare ranking events — adopting the Letterboxd/Beli model.** A bare "X ranked Y" event is thin to comment on ("nice score"); the authored *review* (public note) is the real unit of conversation. So the public note becomes a first-class, commentable object. Build order: (A) note authoring + display on book pages, (B) notes surface on feed cards, (C) comments on reviews. This pulls the roadmap's "commenting on public notes" from V2 toward V1, and reframes public notes from a buried top-10-only prompt into a primary feature. Note/comment-thread surface (route vs. sheet) deferred to the C step — the thread design follows naturally once the review object exists.

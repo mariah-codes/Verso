@@ -2,7 +2,7 @@
 
 *Verso V1 — what we're building and why.*
 
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-12
 
 ---
 
@@ -70,7 +70,7 @@ List of friends sorted by taste-match score descending. Each row: avatar, name, 
 
 ### Tab 3 — Search / Add
 
-Search bar querying Open Library API. Results as cards. Tap → action menu (Read / Reading / Want to read). If Read → pairwise ranking. Goodreads CSV import button at bottom.
+Search bar querying Open Library API (English-edition heuristic, junk/dedup filtering, curated covers for the onboarding titles — see ARCHITECTURE). Results as cards. Tap → action menu (Read / Reading / Want to read / DNF). If Read → pairwise ranking. (Goodreads CSV import is deferred to a future Settings entry — not in V1.)
 
 ### Tab 4 — You (Profile)
 
@@ -93,19 +93,38 @@ The full browsable archive. One view, rendered for any user: your own via this t
 
 DNF is not shown here (own-profile-only, per the privacy model). Layout pending mockup.
 
+### Settings
+
+Reached from the profile (You) header — not a tab. Lets the user edit display
+name and username, change email and password (email-signup users only; OAuth
+users authenticate through their provider), sign out, and delete their account.
+Account deletion is currently **partial** — it clears the user's `user_books`
+and signs them out; full auth-record deletion needs a service-role function (see
+ARCHITECTURE → Known technical debt). A Goodreads CSV import lives here in a
+future iteration.
+
 ---
 
 ## Key flows
 
+### Landing / welcome
+
+Signed-out entry screen: cream ground, the brand open-book line mark above the
+"Verso" wordmark, tagline **"Reading is better with friends."**, and two CTAs —
+Get started (sign up) / Sign in.
+
 ### Onboarding (target: 90 seconds—2 minutes)
 
-1. Sign up with Apple/Google
-2. Name + photo
-3. **Cover grid:** tap covers from a curated 50-book grid. Aim for 8-12 taps.
-4. Optional Goodreads CSV import
-5. Pairwise rank tapped books (binary search, ~15 comparisons for 10 books)
-6. Find friends — phone contacts or invite code
-7. Land on home with picks populated
+Auth is **Google or email** (no Apple in V1). The flow after auth:
+
+1. Sign up with Google or email
+2. **Profile:** display name + username (auto-suggested, editable) + optional photo
+3. **Cover grid:** tap covers from a curated 51-book grid ("Which have you read?"). Aim for 10+ taps.
+4. **Ranking game:** tier sweep (Loved / Liked / Wasn't for me) → battle stream (pairwise) → celebration. A game shell over `lib/ranking.ts`, distinct from the in-app RankingFlow.
+5. **Find friends:** search by name and follow.
+6. Land on home with picks populated
+
+No Goodreads CSV import and no phone-contacts step in V1 — both deferred (see ROADMAP / DECISION_LOG 2026-06-11).
 
 ### Pairwise ranking
 

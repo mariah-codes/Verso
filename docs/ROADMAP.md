@@ -2,7 +2,7 @@
 
 *What's in V1, what's deferred, and what comes next.*
 
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-12
 
 ---
 
@@ -16,8 +16,10 @@
 The minimum honest version of Verso. See `PRODUCT_SPEC.md` for details.
 
 ### Functionality
-- Auth (Apple, Google, email)
-- Onboarding with cover grid + optional Goodreads import
+- Auth (Google, email) — no Apple in V1
+- Landing / welcome screen (cream, brand line mark, "Reading is better with friends.")
+- Onboarding flow: profile → 51-book cover grid → ranking game → find friends by name (no Goodreads import — deferred to Settings)
+- Settings page (display name, username, email, password, sign out, partial account deletion)
 - Pairwise ranking with tiers (loved / liked / fine)
 - Profile with Top 3, currently reading, want-to-read preview, milestones, DNF list; full ranked shelf + want-to-read on the Shelf tab
 - Friends list sorted by taste-match

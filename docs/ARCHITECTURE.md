@@ -2,7 +2,7 @@
 
 *Tech stack, data model, and key algorithms for Verso V1.*
 
-**Last updated:** 2026-06-10
+**Last updated:** 2026-06-12
 
 ---
 
@@ -94,7 +94,7 @@ Built with future portability to React Native in mind:
 
 /public                    Static assets
   /data
-    onboarding-books.json  50 curated titles for cover grid
+    onboarding-books.json  51 curated titles for cover grid
   icons, manifest, etc.
 
 /supabase                  Database migrations
@@ -112,7 +112,9 @@ Eight core tables.
 id              uuid PK (from Supabase auth)
 created_at      timestamp
 display_name    text
+username        text (unique on lower(username); auto-generated at signup, editable)
 photo_url       text (nullable)
+onboarded_at    timestamptz (nullable; NULL = onboarding unfinished, gates /onboarding/* routes. Backfilled to now() for pre-existing users so they skip the flow; new signups insert NULL)
 bio             text (nullable, V2)
 ```
 
@@ -218,7 +220,7 @@ created_at      timestamp
 Supabase requires RLS on every table. Summary:
 
 - **users:** anyone authenticated reads; user updates own row only
-- **books:** anyone authenticated reads + inserts; no updates/deletes
+- **books:** anyone authenticated reads + inserts + updates; no deletes. (The authenticated UPDATE policy is new — it lets the Search upsert refresh title/author/cover_url/published_year on re-add so stale foreign-canonical metadata self-heals. Metadata stays globally shared, one row per `open_library_id`.)
 - **user_books:** anyone authenticated reads where `visibility='visible'`; user reads own regardless; only owner inserts/updates/deletes
 - **follows:** anyone authenticated reads; only follower inserts/deletes
 - **comparisons:** owner only
@@ -285,6 +287,74 @@ Full list (grouped, behind "more"):
 Fiction — General fiction · Classics · Historical fiction · Sci-fi & fantasy ·  Mystery & thriller · Romance · Short stories & essays · Poetry & drama
 
 Non-fiction — Memoir & biography · Narrative non-fiction · History & politics · Society & culture · Science & ideas · Psychology & self-improvement · Business & strategy · Art, fashion & design · Travel & place · Other
+
+### Search (Open Library)
+
+`/lib/open-library.ts` wraps the Open Library search API and applies a four-layer
+quality defense before results reach the UI:
+
+1. **English-edition heuristic** — query with `lang=en` and read the editions
+   sub-doc, so the canonical title + cover come from an English edition rather
+   than a work's foreign-language original (e.g. avoids Kundera surfacing as
+   "Nesnesitelná lehkost bytí" with a French cover).
+2. **Junk-title demotion** — boxed-set / "complete works" / study-guide style
+   noise is pushed down.
+3. **Normalized dedup** — lowercase, strip a leading "the", strip punctuation,
+   and strip trailing Volume/Part suffixes; rows that then share title+author
+   collapse to the single highest-edition-count work (the most canonical record).
+4. **Authorless / Anonymous hard filter** — rows with no real author (or author
+   "Anonymous") are dropped. (Trade-off: a few legitimately anonymous works are
+   excluded — see Known technical debt.)
+
+**Curated-cover override:** the 51 onboarding books carry hand-verified covers
+keyed by Open Library work key; when one of them appears in Search results, the
+curated cover is substituted so a known title never regresses to a bad
+auto-pulled cover. Google Books remains the metadata fallback when Open Library
+has no usable record.
+
+---
+
+## UI conventions
+
+Visual language shared across every screen (enforced by review, not tooling):
+
+- **Text opacity ramp** on `--foreground` (warm charcoal `#1F1B16`): `/100`
+  identity · `/70` body · `/55` label · `/40` meta · `/60` section header.
+  One-off greys are snapped to the nearest ramp stop.
+- **Surfaces:** warm putty `#ECE4D8` for content surfaces (chips, pills,
+  private-note blocks); shadcn/grey defaults for structural chrome. The two
+  systems aren't fully reconciled yet — see Known technical debt. Card edges use
+  a soft warm-charcoal border `rgba(31,27,22,0.07)`, not hard grey outlines.
+- **Two font weights only:** 400 regular and 500 medium. No 600/700 anywhere.
+- **Type:** EB Garamond serif for headlines + book titles (everywhere a title
+  renders); system sans for everything else (metadata, labels, buttons, nav).
+- **Accent discipline:** terracotta `#9C4A2F` is reserved for the active nav
+  item, selected/active states, primary buttons, and book scores — not for
+  secondary links or decoration.
+- **Icons:** single thin stroke weight (1.75) across the app.
+
+---
+
+## Known technical debt
+
+Tracked shortcuts and rough edges, acceptable at soft-launch scale:
+
+- **`closeRankGap` runs in JS**, not a single SQL statement — fine for small
+  tiers, would want a set-based query at scale.
+- **`getFollowing` issues 3 queries** rather than one joined read.
+- **`private_note` is protected by app-layer select discipline**, not a
+  column-level RLS policy — every query must avoid selecting it for non-owners.
+- **Follow toggle costs an extra round-trip** (write + read-back) to guarantee
+  the confirmed state.
+- **Anonymous works are hard-filtered from search**, which excludes the rare
+  legitimately-anonymous book.
+- **Mega-reprinted classics** can still leave duplicate OL work records the
+  normalized dedup doesn't fully collapse.
+- **Account deletion is partial** — `deleteAccountData` clears the user's
+  `user_books` and signs them out, but full `auth.users` deletion needs a
+  service-role Edge Function (not yet built).
+- **Putty/grey surface inconsistency** — content-surface putty and shadcn chrome
+  grey coexist; reconciliation is a post-launch pass.
 
 ---
 
