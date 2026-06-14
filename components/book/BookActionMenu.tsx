@@ -18,6 +18,9 @@ interface BookActionMenuProps {
   /** Called after a successful shelf add. ids contains the Supabase row IDs
    *  so the caller can open the ranking flow without another round-trip. */
   onSuccess: (book: BookSearchResult, status: BookStatus, ids: BookAddedIds) => void
+  /** Called when the book is already on the user's shelf and we declined to
+   *  re-add / re-rank it — the caller routes to that book's detail page. */
+  onExisting: (bookId: string) => void
 }
 
 const STATUS_OPTIONS: {
@@ -40,6 +43,7 @@ export function BookActionMenu({
   userId,
   onClose,
   onSuccess,
+  onExisting,
 }: BookActionMenuProps) {
   const [submitting, setSubmitting] = useState<BookStatus | null>(null)
   const [sheetError, setSheetError] = useState<string | null>(null)
@@ -70,12 +74,19 @@ export function BookActionMenu({
     setSubmitting(status)
     setSheetError(null)
 
-    const { error, bookId, userBookId } = await addBookToShelf(book, status, userId)
+    const { error, bookId, userBookId, alreadyOnShelf } = await addBookToShelf(book, status, userId)
 
     setSubmitting(null)
 
     if (error || !bookId || !userBookId) {
       setSheetError(error ?? "Something went wrong")
+      return
+    }
+
+    // Already on the shelf — don't re-rank. Route to the book's detail page.
+    if (alreadyOnShelf) {
+      onExisting(bookId)
+      onClose()
       return
     }
 

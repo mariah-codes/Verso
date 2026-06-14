@@ -154,24 +154,42 @@ function normKey(s: string): string {
 }
 
 /**
- * Collapse duplicate WORK records of the same book. Open Library frequently holds
- * several work records for one title; two users each adding a different one would
- * silently break taste-match overlap (it joins on book_id). When results share the
- * same normalized title AND the same normalized primary author, keep only the
- * higher-edition-count record (the canonical one) and drop the rest. Same title
- * with a DIFFERENT author is left alone (legitimately different books). Ranked
- * order of the survivors is preserved.
+ * Collapse duplicate records of the same book so it can't surface — and be
+ * ranked — twice. Open Library returns a stable work key (OL…W) per doc and
+ * frequently also holds several distinct work records for one title; two users
+ * each adding a different one would silently break taste-match overlap (it joins
+ * on book_id). Two passes, both keeping the canonical (highest-edition-count)
+ * record and preserving the survivors' ranked order:
+ *
+ *   1. PRIMARY — group by Open Library work key. Collapses exact-work duplicates
+ *      (same OL…W appearing more than once once editions are expanded). A record
+ *      with no key falls back to its normalized title+author as the group key.
+ *   2. FALLBACK — group the survivors by normalized title + primary author, so
+ *      DISTINCT work records of the same book (different OL…W, same title) also
+ *      collapse to one. Same title with a DIFFERENT author is left alone.
  */
 function dedupeWorks(results: BookSearchResult[]): BookSearchResult[] {
-  // Per (title|author) group, find the canonical record = most editions.
-  const canonical = new Map<string, BookSearchResult>()
-  for (const r of results) {
-    const key = `${normKey(r.title)}|${normKey(r.author)}`
-    const cur = canonical.get(key)
-    if (!cur || (r.editionCount ?? 0) > (cur.editionCount ?? 0)) canonical.set(key, r)
+  const keepHighestEditionCount = (
+    rows: BookSearchResult[],
+    keyOf: (r: BookSearchResult) => string,
+  ): BookSearchResult[] => {
+    const canonical = new Map<string, BookSearchResult>()
+    for (const r of rows) {
+      const k = keyOf(r)
+      const cur = canonical.get(k)
+      if (!cur || (r.editionCount ?? 0) > (cur.editionCount ?? 0)) canonical.set(k, r)
+    }
+    const keep = new Set(canonical.values())
+    return rows.filter((r) => keep.has(r))
   }
-  const keep = new Set(canonical.values())
-  return results.filter((r) => keep.has(r))
+
+  // 1. Work key primary (title+author only when a key is missing).
+  const byWork = keepHighestEditionCount(
+    results,
+    (r) => r.openLibraryId || `t:${normKey(r.title)}|${normKey(r.author)}`,
+  )
+  // 2. Normalized title+author across distinct work records.
+  return keepHighestEditionCount(byWork, (r) => `${normKey(r.title)}|${normKey(r.author)}`)
 }
 
 /**
@@ -180,7 +198,7 @@ function dedupeWorks(results: BookSearchResult[]): BookSearchResult[] {
  * these, never drop them — Search still shows everything, just the real book first.
  */
 const JUNK_TITLE =
-  /\b(summary|analysis|conversation starters?|study guide|workbook|collection|boxed set|\d+\s+books?|trivia|review of|key\s?takeaways?|sidekick|instaread|sparknotes|cliffsnotes|companion to|guide to|annotated|manga|graphic novel|illustrated|adaptation|picture book|board book|coloring)\b/i
+  /\b(summary|analysis|conversation starters?|conversations? (on|about)|study guide|workbook|collection|boxed set|box set|omnibus|\d+\s+books?|tie[- ]?in|collector'?s?|deluxe|trivia|review of|key\s?takeaways?|sidekick|instaread|sparknotes|cliffsnotes|companion to|guide to|annotated|manga|graphic novel|illustrated|adaptation|picture book|board book|coloring)\b/i
 
 /**
  * Re-ranks results so the CANONICAL work surfaces first:

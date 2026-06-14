@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Search, X } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useBookSearch } from "@/hooks/use-book-search"
@@ -14,6 +15,7 @@ import type { BookStatus } from "@/lib/books"
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function SearchPage() {
+  const router = useRouter()
   const { query, setQuery, results, isLoading, error } = useBookSearch()
   const [userId, setUserId]               = useState<string | null>(null)
   const [selectedBook, setSelectedBook]   = useState<BookSearchResult | null>(null)
@@ -154,6 +156,12 @@ export default function SearchPage() {
           userId={userId}
           onClose={() => setSelectedBook(null)}
           onSuccess={handleSuccess}
+          onExisting={(bookId) => {
+            // Already on the shelf — go to its detail page (which surfaces a
+            // toast) instead of re-ranking it.
+            setSelectedBook(null)
+            router.push(`/book/${bookId}?added=exists`)
+          }}
         />
       )}
 

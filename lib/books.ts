@@ -16,6 +16,10 @@ export interface AddBookResult {
   bookId: string | null
   /** user_books.id — null on error. Needed to open the ranking flow. */
   userBookId: string | null
+  /** True when the user already had this book on their shelf and we declined to
+   *  add it again / start a second ranking. The caller routes to the existing
+   *  book's detail page instead of opening the ranking flow. */
+  alreadyOnShelf: boolean
 }
 
 /**
@@ -31,7 +35,8 @@ export async function addBookToShelf(
   status: BookStatus,
   userId: string,
 ): Promise<AddBookResult> {
-  const fail = (msg: string): AddBookResult => ({ error: msg, bookId: null, userBookId: null })
+  const fail = (msg: string): AddBookResult =>
+    ({ error: msg, bookId: null, userBookId: null, alreadyOnShelf: false })
 
   // ── 1. Ensure the book exists in the reference table ─────────────────────
   // Upsert with UPDATE-on-conflict (no ignoreDuplicates): on an existing
@@ -80,6 +85,17 @@ export async function addBookToShelf(
     .eq("book_id", bookRow.id)
     .maybeSingle()
 
+  // ── Guard: never rank the same book twice ────────────────────────────────
+  // Only block when the book is ALREADY finished (i.e. already ranked) and the
+  // user is adding it as finished again — that's the duplicate-ranking case. Bail
+  // with `alreadyOnShelf` so the caller routes to the book's detail page (where
+  // the Re-rank control acts on the one row) instead of launching a second
+  // ranking flow. A want_to_read / reading / dnf row becoming finished is a
+  // FIRST ranking and must proceed normally (falls through to the upsert below).
+  if (status === "finished" && existingRow?.status === "finished") {
+    return { error: null, bookId: bookRow.id, userBookId: existingRow.id, alreadyOnShelf: true }
+  }
+
   const leavingFinished =
     existingRow?.status === "finished" && status !== "finished"
 
@@ -119,7 +135,7 @@ export async function addBookToShelf(
     return fail(ubError.message)
   }
 
-  return { error: null, bookId: bookRow.id, userBookId: ubData.id }
+  return { error: null, bookId: bookRow.id, userBookId: ubData.id, alreadyOnShelf: false }
 }
 
 /**

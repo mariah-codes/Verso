@@ -115,6 +115,9 @@ export default function BookPage() {
 
   // Toast
   const [toast, showToast, dismissToast] = useToast()
+  // Fires the "already on shelf" toast once, when Search routed here because the
+  // book was already on the shelf (?added=exists) rather than re-ranking it.
+  const dupeNoticeShownRef = useRef(false)
 
   // Genre edit
   const [genreEditing, setGenreEditing] = useState(false)
@@ -196,6 +199,22 @@ export default function BookPage() {
     }
     load()
   }, [id, refresh])
+
+  // When Search routes here because the book was already on the shelf, surface a
+  // toast once the row has loaded — finished ⇒ "already ranked", else "already on
+  // your shelf" — then strip the ?added param so a refresh doesn't re-toast.
+  useEffect(() => {
+    if (loading || dupeNoticeShownRef.current) return
+    if (typeof window === "undefined") return
+    if (new URLSearchParams(window.location.search).get("added") !== "exists") return
+    dupeNoticeShownRef.current = true
+    showToast({
+      variant: "note",
+      message: userBook?.status === "finished" ? "You’ve already ranked this" : "Already on your shelf",
+      bookTitle: book?.title,
+    })
+    window.history.replaceState(null, "", `/book/${id}`)
+  }, [loading, userBook, book, id, showToast])
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 

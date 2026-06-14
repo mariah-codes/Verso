@@ -1,6 +1,6 @@
 # Verso
 
-*Find your next book through the friends whose taste you actually trust.*
+*Reading is better with friends.*
 
 Verso is a social book-tracking app for people who want their reading life to feel curated, social, and personal. Instead of anonymous reviews or algorithmic discovery, Verso helps users find their next book through friends whose taste they trust.
 
@@ -105,7 +105,8 @@ Full reasoning in [`docs/DECISION_LOG.md`](docs/DECISION_LOG.md).
 - [x] Tech stack decisions
 - [x] Foundations (auth, search, profile, ranking) — Week 1
 - [x] Social (follows, friends, taste-match, DNF) — Week 2
-- [~] Discovery (weekly picks, feed, reactions, milestones) — Week 3
+- [x] Discovery (weekly picks, feed, reactions) — Week 3
+- [x] Onboarding flow, landing screen, settings page
 - [ ] Soft launch + user research
 
 ---
