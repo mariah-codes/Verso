@@ -1,5 +1,4 @@
-import Image from "next/image"
-import { BookOpen } from "lucide-react"
+import { BookCover as Cover } from "@/components/book/BookCover"
 
 interface BookPreview {
   title: string
@@ -84,16 +83,7 @@ function BookCover({ book, onClick, accent }: { book: BookPreview; onClick: () =
             : "group-hover:ring-2 group-hover:ring-foreground/20",
         ].join(" ")}
       >
-        {book.coverUrl ? (
-          <Image src={book.coverUrl} alt={book.title} fill sizes="120px" className="object-cover" />
-        ) : (
-          <div className="absolute inset-0 bg-muted flex flex-col items-center justify-center gap-1 px-2">
-            <BookOpen className="size-6 text-muted-foreground/40"  strokeWidth={1.75} />
-            <span className="text-xs text-center text-muted-foreground line-clamp-3 leading-tight">
-              {book.title}
-            </span>
-          </div>
-        )}
+        <Cover coverUrl={book.coverUrl} title={book.title} />
       </div>
       {/* Title beneath — small, muted, centered, 2 lines max */}
       <span className="text-xs text-foreground/55 text-center leading-snug line-clamp-2">

@@ -1,5 +1,5 @@
 import { supabase } from "./supabase"
-import type { BookSearchResult } from "./open-library"
+import { resolveCoverUrl, type BookSearchResult } from "./open-library"
 
 export type BookStatus = "want_to_read" | "reading" | "finished" | "dnf"
 
@@ -46,12 +46,18 @@ export async function addBookToShelf(
   // title + French cover) is corrected the next time anyone adds it via Search.
   // Requires the books UPDATE RLS policy (migration 20260612000001). We SELECT
   // afterwards to get the id regardless of insert-vs-update.
+  // Resolve a good modern-edition cover at add time (one network call for the
+  // single book being added) — upgrades a scanned/old work-default cover to a
+  // designed commercial edition's. Falls back to the search-thumbnail cover, then
+  // null. See lib/open-library.ts → resolveCoverUrl.
+  const coverUrl = await resolveCoverUrl(book.openLibraryId, book.coverUrl)
+
   const { error: upsertError } = await db.from("books").upsert(
     {
       open_library_id: book.openLibraryId,
       title: book.title,
       author: book.author,
-      cover_url: book.coverUrl ?? "",
+      cover_url: coverUrl ?? "",
       published_year: book.year,
     },
     { onConflict: "open_library_id" },

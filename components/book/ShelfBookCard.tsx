@@ -1,6 +1,6 @@
 import Link from "next/link"
-import Image from "next/image"
-import { BookOpen, AlignLeft } from "lucide-react"
+import { AlignLeft } from "lucide-react"
+import { BookCover } from "@/components/book/BookCover"
 import { cn } from "@/lib/utils"
 import { ScoreDisplay } from "@/components/shared/ScoreDisplay"
 import type { ShelfBook } from "@/lib/profile"
@@ -10,7 +10,8 @@ interface ShelfBookCardProps {
   /** Tailwind width class — caller controls size so the card works in both
    *  horizontal scroll rows and the finished grid. */
   className?: string
-  /** next/image sizes hint — should match the rendered CSS width */
+  /** Accepted for caller compatibility; covers now render via <BookCover> (a
+   *  direct <img>), which doesn't take a next/image sizes hint. */
   sizes?: string
 }
 
@@ -21,7 +22,6 @@ interface ShelfBookCardProps {
 export function ShelfBookCard({
   book,
   className,
-  sizes = "110px",
 }: ShelfBookCardProps) {
   return (
     <Link
@@ -34,22 +34,11 @@ export function ShelfBookCard({
     >
       {/* Cover */}
       <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden bg-muted shadow-sm transition-shadow group-hover:shadow-md">
-        {book.coverUrl ? (
-          <Image
-            src={book.coverUrl}
-            alt={`Cover of ${book.title}`}
-            fill
-            sizes={sizes}
-            className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-          />
-        ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-muted px-2">
-            <BookOpen className="size-5 text-muted-foreground opacity-40"  strokeWidth={1.75} />
-            <span className="text-[10px] text-muted-foreground text-center leading-snug line-clamp-3">
-              {book.title}
-            </span>
-          </div>
-        )}
+        <BookCover
+          coverUrl={book.coverUrl}
+          title={book.title}
+          className="transition-transform duration-300 group-hover:scale-[1.03]"
+        />
       </div>
 
       {/* Metadata */}

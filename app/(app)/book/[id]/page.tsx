@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import Image from "next/image"
+import { BookCover } from "@/components/book/BookCover"
 import { ChevronLeft, CheckCheck, BookOpen, Bookmark, BookX, CircleX, Eye, Lock } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { RankingFlow, type NewBookInfo } from "@/components/ranking/RankingFlow"
@@ -558,9 +558,7 @@ export default function BookPage() {
 
           {/* ── Cover ───────────────────────────────────────────────────────── */}
           <div className="relative w-[170px] aspect-[2/3] rounded-xl overflow-hidden shadow-lg bg-muted mt-1">
-            {book.coverUrl
-              ? <Image src={book.coverUrl} alt={`Cover of ${book.title}`} fill sizes="170px" className="object-cover" priority />
-              : <div className="absolute inset-0 bg-muted" />}
+            <BookCover coverUrl={book.coverUrl} title={book.title} priority />
           </div>
 
           {/* ── Title / author ──────────────────────────────────────────────── */}

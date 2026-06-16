@@ -1,8 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Image from "next/image"
-import { BookOpen } from "lucide-react"
+import { BookCover } from "@/components/book/BookCover"
 import { SCORE_DISPLAY_THRESHOLD, TIER_LABELS, type Tier } from "@/lib/ranking"
 import { fetchUserBookGenre, saveBookGenre } from "@/lib/books"
 import { ScoreDisplay } from "@/components/shared/ScoreDisplay"
@@ -76,14 +75,8 @@ export function RankingResult({
         }}
       >
         {/* Cover */}
-        <div className="relative w-32 aspect-[2/3] rounded-xl overflow-hidden shadow-xl">
-          {coverUrl ? (
-            <Image src={coverUrl} alt={`Cover of ${bookTitle}`} fill sizes="128px" className="object-cover" />
-          ) : (
-            <div className="absolute inset-0 bg-muted flex items-center justify-center">
-              <BookOpen className="size-8 text-muted-foreground/40"  strokeWidth={1.75} />
-            </div>
-          )}
+        <div className="relative w-32 aspect-[2/3] rounded-xl overflow-hidden shadow-xl bg-muted">
+          <BookCover coverUrl={coverUrl} title={bookTitle} />
         </div>
 
         {/* Result text */}

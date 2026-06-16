@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import Image from "next/image"
 import { BookOpen, Bookmark, Heart, MessageCircle, Users } from "lucide-react"
+import { BookCover } from "@/components/book/BookCover"
 import { TIER_LABELS, type Tier } from "@/lib/ranking"
 import { saveToWantToRead, removeFromWantToRead, type BookStatus } from "@/lib/books"
 import { formatRelativeTime, type FeedEvent } from "@/lib/feed"
@@ -219,13 +219,7 @@ function FeedItem({
 
         {/* Cover (right) — substantial but still secondary; not a link this pass */}
         <div className="relative w-12 aspect-[2/3] rounded-md overflow-hidden bg-muted shrink-0 shadow-sm">
-          {book.coverUrl ? (
-            <Image src={book.coverUrl} alt={`Cover of ${book.title}`} fill sizes="48px" className="object-cover" />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <BookOpen className="size-4 text-muted-foreground opacity-40"  strokeWidth={1.75} />
-            </div>
-          )}
+          <BookCover coverUrl={book.coverUrl} title={book.title} />
         </div>
       </div>
 

@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import Image from "next/image"
 import { BookOpen, BookPlus, UserPlus } from "lucide-react"
+import { BookCover } from "@/components/book/BookCover"
 import type { EnrichedPick } from "@/lib/weekly-picks-data"
 
 interface WeeklyPicksSectionProps {
@@ -100,22 +100,11 @@ function PickCard({ pick }: { pick: EnrichedPick }) {
         className="group block focus-visible:outline-none"
       >
         <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden bg-muted shadow-sm transition-shadow group-hover:shadow-md">
-          {pick.coverUrl ? (
-            <Image
-              src={pick.coverUrl}
-              alt={`Cover of ${pick.title}`}
-              fill
-              sizes="128px"
-              className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-            />
-          ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-muted px-2">
-              <BookOpen className="size-5 text-muted-foreground opacity-40"  strokeWidth={1.75} />
-              <span className="text-[10px] text-muted-foreground text-center leading-snug line-clamp-3">
-                {pick.title}
-              </span>
-            </div>
-          )}
+          <BookCover
+            coverUrl={pick.coverUrl}
+            title={pick.title}
+            className="transition-transform duration-300 group-hover:scale-[1.03]"
+          />
         </div>
         <p className="mt-2 text-[15px] text-foreground leading-tight line-clamp-2 px-0.5 font-serif tracking-[0.01em]">
           {pick.title}

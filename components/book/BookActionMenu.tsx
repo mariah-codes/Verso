@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import Image from "next/image"
 import { X, CheckCheck, BookOpen, Bookmark, BookX } from "lucide-react"
+import { BookCover } from "@/components/book/BookCover"
 import { addBookToShelf, type BookStatus } from "@/lib/books"
 import type { BookSearchResult } from "@/lib/open-library"
 
@@ -132,17 +132,7 @@ export function BookActionMenu({
           <div className="flex items-start gap-4 px-5 pt-3 pb-4 border-b border-border">
             {/* Mini cover */}
             <div className="relative w-12 aspect-[2/3] rounded-lg overflow-hidden bg-muted shrink-0">
-              {book.coverUrl ? (
-                <Image
-                  src={book.coverUrl}
-                  alt=""
-                  fill
-                  sizes="48px"
-                  className="object-cover"
-                />
-              ) : (
-                <div className="absolute inset-0 bg-muted" />
-              )}
+              <BookCover coverUrl={book.coverUrl} title={book.title} />
             </div>
 
             {/* Title / author */}

@@ -1,5 +1,4 @@
-import Image from "next/image"
-import { BookOpen } from "lucide-react"
+import { BookCover } from "@/components/book/BookCover"
 import { TIER_LABELS, type Tier } from "@/lib/ranking"
 
 interface TierPromptProps {
@@ -18,14 +17,8 @@ export function TierPrompt({ bookTitle, coverUrl, onSelect }: TierPromptProps) {
   return (
     <div className="flex flex-col items-center gap-8 px-6 py-10">
       {/* Cover */}
-      <div className="relative w-28 aspect-[2/3] rounded-xl overflow-hidden shadow-lg">
-        {coverUrl ? (
-          <Image src={coverUrl} alt={`Cover of ${bookTitle}`} fill sizes="112px" className="object-cover" />
-        ) : (
-          <div className="absolute inset-0 bg-muted flex items-center justify-center">
-            <BookOpen className="size-8 text-muted-foreground/40"  strokeWidth={1.75} />
-          </div>
-        )}
+      <div className="relative w-28 aspect-[2/3] rounded-xl overflow-hidden shadow-lg bg-muted">
+        <BookCover coverUrl={coverUrl} title={bookTitle} />
       </div>
 
       {/* Prompt */}
