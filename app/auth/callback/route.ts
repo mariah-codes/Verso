@@ -28,18 +28,25 @@ export async function GET(request: Request) {
 
   const supabase = await createSupabaseServerClient()
 
-  // Establish the session from whichever flow this is.
+  // Establish the session from whichever flow this is. Capture the real error so
+  // the failure redirect can name the actual reason instead of a generic "auth".
   let ok = false
+  let authError: unknown = null
   if (tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash })
+    authError = error
     ok = !error
   } else if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
+    authError = error
     ok = !error
   }
 
   if (!ok || providerError) {
-    return NextResponse.redirect(`${origin}/sign-in?error=auth`)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const reason = providerError ?? (authError as any)?.message ?? (code || tokenHash ? "verify_failed" : "no_credentials")
+    console.error("[auth/callback] failed:", reason)
+    return NextResponse.redirect(`${origin}/sign-in?error=auth&reason=${encodeURIComponent(reason)}`)
   }
 
   // Password-recovery links land on the reset page regardless of onboarding.

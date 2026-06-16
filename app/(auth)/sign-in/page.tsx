@@ -46,6 +46,13 @@ function SignInForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const authError = searchParams.get("error")
+  // The callback appends the real Supabase failure as `reason` for debugging
+  // (it stays in the URL + server log). NEVER render it raw — map it to friendly
+  // copy. `reason` lives in the URL so this runs each render; that's fine.
+  const authReason = searchParams.get("reason")
+  if (authError && authReason) {
+    console.warn("[sign-in] auth callback failed, reason:", authReason)
+  }
   const [serverError, setServerError] = useState<string | null>(null)
 
   const form = useForm<SignInValues>({
@@ -105,10 +112,11 @@ function SignInForm() {
       </div>
 
       {/* Auth error banner (redirected back from a failed callback — could be
-          OAuth or an expired/used email-confirmation link, so keep it generic) */}
+          OAuth or an expired/used email-confirmation link). User-facing copy is
+          always friendly + generic; the raw `reason` is for logs only. */}
       {authError && (
         <p className="text-sm text-destructive text-center bg-destructive/5 rounded-lg py-2 px-3">
-          We couldn’t complete sign-in. Please try again.
+          {friendlyAuthError(authReason)}
         </p>
       )}
 
@@ -198,6 +206,23 @@ function SignInForm() {
       </p>
     </div>
   )
+}
+
+// ── Auth-error copy ───────────────────────────────────────────────────────────
+
+/**
+ * Maps the callback's raw `reason` to friendly, user-safe copy. We never show
+ * the raw Supabase string (e.g. "code verifier missing") — only hand-written
+ * copy for known cases, falling back to a generic message for everything else.
+ */
+function friendlyAuthError(reason: string | null): string {
+  const r = (reason ?? "").toLowerCase()
+  // Expired / already-used confirmation or recovery link — recoverable, so point
+  // the user at the obvious next action.
+  if (r.includes("expired") || r.includes("invalid") || r.includes("otp")) {
+    return "This link has expired or already been used. Request a new one and try again."
+  }
+  return "We couldn’t complete sign-in. Please try again."
 }
 
 // ── Google SVG icon ───────────────────────────────────────────────────────────
