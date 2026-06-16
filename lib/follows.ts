@@ -11,6 +11,7 @@ const db = supabase as any
 export interface UserSummary {
   id: string
   displayName: string
+  username: string
   photoUrl: string | null
 }
 
@@ -109,12 +110,12 @@ export async function getFollowing(userId: string): Promise<FollowingUser[]> {
   // Step 2: fetch profiles for those users
   const { data: users } = await db
     .from("users")
-    .select("id, display_name, photo_url")
+    .select("id, display_name, username, photo_url")
     .in("id", followedIds)
 
-  const userMap = new Map<string, { display_name: string; photo_url: string | null }>()
-  for (const u of (users ?? []) as { id: string; display_name: string; photo_url: string | null }[]) {
-    userMap.set(u.id, { display_name: u.display_name, photo_url: u.photo_url ?? null })
+  const userMap = new Map<string, { display_name: string; username: string; photo_url: string | null }>()
+  for (const u of (users ?? []) as { id: string; display_name: string; username: string; photo_url: string | null }[]) {
+    userMap.set(u.id, { display_name: u.display_name, username: u.username, photo_url: u.photo_url ?? null })
   }
 
   // Step 3: fetch their currently-reading books (visible only; one title per user is enough)
@@ -141,6 +142,7 @@ export async function getFollowing(userId: string): Promise<FollowingUser[]> {
       {
         id,
         displayName: u.display_name,
+        username: u.username,
         photoUrl: u.photo_url,
         currentlyReading: readingMap.get(id) ?? null,
       },
@@ -183,7 +185,7 @@ export async function getFollowers(userId: string): Promise<UserSummary[]> {
 
   const { data: users } = await db
     .from("users")
-    .select("id, display_name, photo_url")
+    .select("id, display_name, username, photo_url")
     .in("id", followerIds)
 
   if (!users) return []
@@ -195,12 +197,12 @@ export async function getFollowers(userId: string): Promise<UserSummary[]> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const u = userMap.get(id) as any
     if (!u) return []
-    return [{ id, displayName: u.display_name, photoUrl: u.photo_url ?? null }]
+    return [{ id, displayName: u.display_name, username: u.username, photoUrl: u.photo_url ?? null }]
   })
 }
 
 /**
- * Searches users by display_name (case-insensitive, partial match).
+ * Searches users by display_name OR username (case-insensitive, partial match).
  * Excludes the current user. Returns up to 20 results, each annotated
  * with whether the current user already follows them.
  */
@@ -208,12 +210,19 @@ export async function searchUsers(
   query: string,
   currentUserId: string,
 ): Promise<SearchResult[]> {
-  if (!query.trim()) return []
+  const q = query.trim()
+  if (!q) return []
+
+  // A leading "@" is how people type a handle — strip it so "@maria" matches the
+  // stored username "maria". The escaped term guards %, _ and , from breaking the
+  // ilike pattern / the PostgREST .or() comma syntax.
+  const term = q.replace(/^@+/, "")
+  const escaped = term.replace(/[%_,()]/g, "\\$&")
 
   const { data: users, error } = await db
     .from("users")
-    .select("id, display_name, photo_url")
-    .ilike("display_name", `%${query.trim()}%`)
+    .select("id, display_name, username, photo_url")
+    .or(`display_name.ilike.%${escaped}%,username.ilike.%${escaped}%`)
     .neq("id", currentUserId)
     .limit(20)
 
@@ -238,6 +247,7 @@ export async function searchUsers(
   return (users as any[]).map((u) => ({
     id: u.id,
     displayName: u.display_name,
+    username: u.username,
     photoUrl: u.photo_url ?? null,
     isFollowing: followingSet.has(u.id),
   }))

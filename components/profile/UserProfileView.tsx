@@ -194,8 +194,8 @@ export function UserProfileView({ targetId }: { targetId: string }) {
 
 /**
  * Taste-match label shown next to the follow control.
- *   loading            → "Match …"
- *   scored             → "Match 87%"
+ *   loading            → "Taste match …"
+ *   scored             → "87% taste match"
  *   below threshold    → "Not enough overlap yet"
  */
 function MatchLabel({
@@ -207,11 +207,11 @@ function MatchLabel({
 }) {
   let text: string
   if (loading || match === null) {
-    text = "Match …"
+    text = "Taste match …"
   } else if (match.score === null) {
     text = "Not enough overlap yet"
   } else {
-    text = `Match ${match.score}%`
+    text = `${match.score}% taste match`
   }
 
   return (
