@@ -4,10 +4,11 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Search } from "lucide-react"
 import { supabase } from "@/lib/supabase"
-import { Avatar } from "@/components/shared/Avatar"
 import { useDebounce } from "@/hooks/use-debounce"
 import { searchUsers, followUser, unfollowUser, type SearchResult } from "@/lib/follows"
 import { completeOnboarding } from "@/lib/onboarding"
+import { FriendSearchRow, FriendSearchHint } from "@/components/friends/FriendSearchRow"
+import { ScreenHeading } from "@/components/shared/ScreenHeading"
 
 export default function OnboardingFriends() {
   const router = useRouter()
@@ -68,14 +69,11 @@ export default function OnboardingFriends() {
 
   return (
     <div className="flex-1 flex flex-col px-5 pb-8 min-h-0">
-      <div className="pt-2 pb-5 shrink-0">
-        <h1 className="text-3xl text-foreground leading-tight" style={{ fontFamily: "var(--font-serif)" }}>
-          Find your friends
-        </h1>
-        <p className="text-sm text-foreground/55 mt-2">
-          Verso works through people — follow a few readers whose taste you trust.
-        </p>
-      </div>
+      <ScreenHeading
+        title="Find your friends"
+        subtitle="Verso works through people — follow a few readers whose taste you trust."
+        className="pt-2 pb-5 shrink-0"
+      />
 
       {/* Search */}
       <div className="shrink-0 flex items-center gap-2 rounded-xl border border-[rgba(31,27,22,0.07)] bg-muted/40 px-3.5 mb-3 focus-within:border-[#9C4A2F]/50">
@@ -83,7 +81,7 @@ export default function OnboardingFriends() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by name"
+          placeholder="Search a name or @handle"
           autoCapitalize="none"
           className="flex-1 bg-transparent py-3 text-base text-foreground placeholder:text-foreground/40 outline-none"
         />
@@ -96,29 +94,22 @@ export default function OnboardingFriends() {
         ) : shown.length > 0 ? (
           <div className="divide-y divide-border/50">
             {shown.map((u) => (
-              <div key={u.id} className="flex items-center gap-3 py-2.5">
-                <Avatar displayName={u.displayName} photoUrl={u.photoUrl} size={40} initialsClassName="text-sm" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{u.displayName}</p>
-                </div>
-                <button
-                  onClick={() => toggleFollow(u)}
-                  disabled={pending.has(u.id)}
-                  className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
-                    u.isFollowing
-                      ? "border border-foreground/20 text-foreground/55"
-                      : "text-white"
-                  }`}
-                  style={u.isFollowing ? undefined : { backgroundColor: "#9C4A2F" }}
-                >
-                  {u.isFollowing ? "Following" : "Follow"}
-                </button>
-              </div>
+              <FriendSearchRow
+                key={u.id}
+                user={u}
+                pending={pending.has(u.id)}
+                onToggle={() => toggleFollow(u)}
+              />
             ))}
           </div>
         ) : query.trim() ? (
           <p className="text-sm text-foreground/40 py-6 text-center">No one by that name.</p>
-        ) : null}
+        ) : (
+          // Before the user types — same open-book hint as the main Find Friends tab.
+          <FriendSearchHint>
+            Search a name or @handle to find readers you trust.
+          </FriendSearchHint>
+        )}
       </div>
 
       {/* CTA + skip */}

@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { ChevronLeft, LibraryBig } from "lucide-react"
+import { ChevronLeft } from "lucide-react"
+import { ScreenHeading } from "@/components/shared/ScreenHeading"
 import {
   fetchFinishedOrdered,
   fetchShelf,
@@ -85,15 +86,7 @@ export function ShelfView({ userId, isOwn }: ShelfViewProps) {
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="sticky top-0 z-20 bg-background/90 backdrop-blur-sm px-5 pt-5 pb-0">
         {isOwn ? (
-          <div className="flex items-center gap-2">
-            <LibraryBig className="size-4 text-foreground/40 shrink-0"  strokeWidth={1.75} />
-            <h1
-              className="text-2xl text-foreground/70"
-              style={{ fontFamily: "var(--font-serif)" }}
-            >
-              Your shelf
-            </h1>
-          </div>
+          <ScreenHeading title="Your shelf" size="text-2xl" />
         ) : (
           <div className="flex items-center gap-2">
             <button

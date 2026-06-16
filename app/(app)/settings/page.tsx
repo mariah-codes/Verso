@@ -16,6 +16,7 @@ import {
   DrawerDescription,
   DrawerClose,
 } from "@/components/ui/drawer"
+import { ScreenHeading } from "@/components/shared/ScreenHeading"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any
@@ -196,9 +197,7 @@ export default function SettingsPage() {
       </div>
 
       <div className="px-5">
-        <h1 className="text-3xl text-foreground leading-tight mb-10" style={{ fontFamily: "var(--font-serif)" }}>
-          Settings
-        </h1>
+        <ScreenHeading title="Settings" className="mb-10" />
 
         {/* ── ACCOUNT ──────────────────────────────────────────────────────── */}
         <SectionLabel>Account</SectionLabel>

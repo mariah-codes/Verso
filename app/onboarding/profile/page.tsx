@@ -12,6 +12,7 @@ import {
   generateUsername,
 } from "@/lib/username"
 import { saveOnboardingProfile, uploadAvatar } from "@/lib/onboarding"
+import { ScreenHeading } from "@/components/shared/ScreenHeading"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any
@@ -121,12 +122,11 @@ export default function OnboardingProfile() {
 
   return (
     <div className="flex-1 flex flex-col px-5 pb-8">
-      <div className="pt-2 pb-7">
-        <h1 className="text-3xl text-foreground leading-tight" style={{ fontFamily: "var(--font-serif)" }}>
-          Set up your profile
-        </h1>
-        <p className="text-sm text-foreground/55 mt-2">This is how friends will find you.</p>
-      </div>
+      <ScreenHeading
+        title="Set up your profile"
+        subtitle="This is how friends will find you."
+        className="pt-2 pb-7"
+      />
 
       {/* Photo (optional) */}
       <div className="flex justify-center mb-8">

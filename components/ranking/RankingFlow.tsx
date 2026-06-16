@@ -280,24 +280,14 @@ export function RankingFlow({ book, userId, onClose, onComplete }: RankingFlowPr
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-safe pt-4 pb-2 border-b border-border shrink-0">
-        <span
-          className="text-base text-foreground/70"
-          style={{ fontFamily: "var(--font-serif)" }}
-        >
-          {phase === "tier"
-            ? "How was it?"
-            : phase === "comparing"
-              ? "Rank it"
-              : phase === "result"
-                ? "Ranked"
-                : " "}
-        </span>
+      {/* Header — bare close only. The centered uppercase kicker above each book
+          title IS the prompt, so a titled header bar would duplicate it. No
+          divider, matching the onboarding shell. */}
+      <div className="flex justify-end px-3 pt-safe pt-3 shrink-0">
         <button
           onClick={onClose}
           aria-label="Close ranking"
-          className="p-2 -mr-2 rounded-full text-foreground/40 hover:text-foreground transition-colors"
+          className="p-2 rounded-full text-foreground/40 hover:text-foreground transition-colors"
         >
           <X className="size-5"  strokeWidth={1.75} />
         </button>

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { BookOpen, Search, UserPlus, X } from "lucide-react"
+import { BookOpen, Search, X } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useDebounce } from "@/hooks/use-debounce"
 import {
@@ -15,6 +15,7 @@ import {
   type FollowingUser,
   type SearchResult,
 } from "@/lib/follows"
+import { FriendSearchRow, FriendSearchHint } from "@/components/friends/FriendSearchRow"
 import { getTasteMatches } from "@/lib/taste-match-data"
 import type { TasteMatchResult } from "@/lib/taste-match"
 
@@ -268,10 +269,10 @@ export default function FriendsPage() {
                 <ul className="mt-3 space-y-0.5">
                   {newPeople.map((user) => (
                     <li key={user.id}>
-                      <SearchUserRow
+                      <FriendSearchRow
                         user={user}
                         pending={pendingIds.has(user.id)}
-                        onFollow={() => handleFollow(user)}
+                        onToggle={() => handleFollow(user)}
                       />
                     </li>
                   ))}
@@ -320,35 +321,13 @@ export default function FriendsPage() {
             friends" yet (that's V2); just a nudge toward the search above.
             Hidden during an active search and once the user has a real circle. */}
         {!isQuerying && !followingLoading && following.length < 10 && (
-          <div className="mt-12 flex flex-col items-center text-center gap-3 px-8">
-            <OpenBookMark />
-            <p className="text-[13px] text-foreground/40 leading-relaxed font-sans">
-              Search a name or @handle to find and follow friends.
-            </p>
-          </div>
+          <FriendSearchHint>
+            Search a name or @handle to find and follow friends.
+          </FriendSearchHint>
         )}
 
       </div>
     </div>
-  )
-}
-
-/** Verso open-book line mark — the brand glyph, reused as the empty-state mark.
- *  ~28px wide, muted charcoal. */
-function OpenBookMark() {
-  return (
-    <svg
-      width="28"
-      viewBox="0 0 40 11"
-      fill="none"
-      stroke="#1F1B16"
-      strokeOpacity={0.3}
-      strokeWidth={1.4}
-      strokeLinecap="round"
-      aria-hidden="true"
-    >
-      <path d="M2 4 Q13 4 20 8 Q27 4 38 4" />
-    </svg>
   )
 }
 
@@ -395,44 +374,6 @@ function UserAvatar({
           {initials}
         </span>
       )}
-    </div>
-  )
-}
-
-function SearchUserRow({
-  user,
-  pending,
-  onFollow,
-}: {
-  user: SearchResult
-  pending: boolean
-  onFollow: () => void
-}) {
-  // Only un-followed people reach this row — followed users are filtered out of
-  // search and live in the Following list below. So this is always a "Follow".
-  return (
-    <div className="flex items-center gap-3 py-2.5 px-1">
-      <UserAvatar photoUrl={user.photoUrl} displayName={user.displayName} />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-foreground truncate">
-          {user.displayName}
-        </p>
-        {user.username && (
-          <p className="text-xs text-foreground/40 truncate mt-0.5">@{user.username}</p>
-        )}
-      </div>
-      <button
-        onClick={onFollow}
-        disabled={pending}
-        className={[
-          "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium",
-          "text-white hover:opacity-90 transition-all active:scale-[0.97]",
-          "disabled:opacity-50 shrink-0",
-        ].join(" ")}
-        style={{ backgroundColor: "#9C4A2F" }}
-      >
-        {pending ? <SmallSpinner /> : <><UserPlus className="size-3.5"  strokeWidth={1.75} />Follow</>}
-      </button>
     </div>
   )
 }

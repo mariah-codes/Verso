@@ -10,22 +10,19 @@ import {
   insertAtPosition,
   estimatedComparisons,
   compareFinishedOrder,
-  TIER_LABELS,
+  SCORE_DISPLAY_THRESHOLD,
   type Tier,
   type RankedBook,
   type ComparisonRecord,
 } from "@/lib/ranking"
 import { ONBOARDING_BOOKS, onboardingCoverUrl, SELECTION_KEY, type OnboardingBook } from "@/lib/onboarding-books"
 import { ensureFinishedBook, persistOnboardingPlacement } from "@/lib/onboarding"
+import { runSeedIfNeeded } from "@/lib/ranking-data"
+import { ScoreDisplay } from "@/components/shared/ScoreDisplay"
+import { TierPrompt } from "@/components/ranking/TierPrompt"
+import { PairwiseCompare } from "@/components/ranking/PairwiseCompare"
 
 const TIERS: Tier[] = ["loved", "liked", "fine"]
-
-// Emoji + sublabel mirror the in-app TierPrompt so the sweep reads as the same app.
-const TIER_META: Record<Tier, { emoji: string; sublabel: string }> = {
-  loved: { emoji: "❤️", sublabel: "Couldn't put it down" },
-  liked: { emoji: "👍", sublabel: "A solid read" },
-  fine:  { emoji: "🫤", sublabel: "Just didn't land" },
-}
 
 type Phase = "loading" | "tier" | "battle" | "done"
 interface PlanItem { book: OnboardingBook; tier: Tier }
@@ -34,6 +31,23 @@ interface BattleView { newCover: string | null; newTitle: string; pivotCover: st
 /** Build a RankedBook (sans rankPosition) for the in-memory tier list. */
 function toRanked(book: OnboardingBook, bookId: string): Omit<RankedBook, "rankPosition"> {
   return { bookId, title: book.title, coverUrl: onboardingCoverUrl(book.coverId, "L"), score: null }
+}
+
+/** Read back the frozen scores for a set of books (after seeding) so the
+ *  celebration shows exactly what the shelf shows. Returns bookId → score. */
+async function fetchScores(userId: string, bookIds: string[]): Promise<Map<string, number | null>> {
+  const map = new Map<string, number | null>()
+  if (bookIds.length === 0) return map
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (supabase as any)
+    .from("user_books")
+    .select("book_id, score")
+    .eq("user_id", userId)
+    .in("book_id", bookIds)
+  for (const row of (data ?? []) as { book_id: string; score: number | null }[]) {
+    map.set(row.book_id, row.score ?? null)
+  }
+  return map
 }
 
 export default function OnboardingRank() {
@@ -125,7 +139,7 @@ export default function OnboardingRank() {
       showBattle()
       return
     }
-    finishBattles()
+    void finishBattles()
   }
 
   function showBattle() {
@@ -191,7 +205,7 @@ export default function OnboardingRank() {
     placeNext()
   }
 
-  function finishBattles() {
+  async function finishBattles() {
     const all = [...placedRef.current.loved, ...placedRef.current.liked, ...placedRef.current.fine]
     if (all.length === 0) { router.push("/onboarding/friends"); return }
     const sorted = [...all].sort((a, b) =>
@@ -201,7 +215,16 @@ export default function OnboardingRank() {
       ),
     )
     setBattle(null)
-    setDone({ count: all.length, top3: sorted.slice(0, 3) })
+    const top3 = sorted.slice(0, 3)
+
+    // Seed frozen scores now (idempotent; a no-op below the threshold) so the
+    // celebration shows the SAME scores the shelf will. completeOnboarding()
+    // re-runs runSeedIfNeeded later as a no-op.
+    await runSeedIfNeeded(userIdRef.current)
+    const scoreById = await fetchScores(userIdRef.current, top3.map((b) => b.bookId))
+    const top3Scored = top3.map((b) => ({ ...b, score: scoreById.get(b.bookId) ?? null }))
+
+    setDone({ count: all.length, top3: top3Scored })
     setPhase("done")
   }
 
@@ -235,7 +258,7 @@ export default function OnboardingRank() {
       }
       planIdxRef.current++
     }
-    finishBattles()
+    void finishBattles()
   }
 
   /** During tier sweep: place already-tiered books (bottom of tier), discard the
@@ -255,7 +278,7 @@ export default function OnboardingRank() {
         placedRef.current[tier] = insertAtPosition(placedRef.current[tier], toRanked(b, ids.bookId), len)
       }
     }
-    finishBattles()
+    void finishBattles()
   }
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -264,39 +287,24 @@ export default function OnboardingRank() {
   if (phase === "tier") {
     const book = queue[sweepIdx]
     return (
-      <div className="flex-1 flex flex-col px-5 pb-8">
-        <p className="text-center text-xs font-medium text-foreground/40 tracking-wide">
+      // Onboarding shell: sweep counter (top) + shared TierPrompt (the canonical
+      // cover / kicker / title / tier cards) + "Finish later" escape (bottom).
+      <div className="flex-1 flex flex-col min-h-0">
+        <p className="shrink-0 pt-2 text-center text-xs font-medium text-foreground/40 tracking-wide">
           Book {sweepIdx + 1} of {queue.length}
         </p>
-        <div className="flex-1 flex flex-col items-center justify-center gap-8">
-          <div className="relative w-28 aspect-[2/3] rounded-xl overflow-hidden shadow-lg bg-muted">
-            {onboardingCoverUrl(book.coverId, "L") && (
-              <Image src={onboardingCoverUrl(book.coverId, "L")!} alt="" fill sizes="112px" className="object-cover" unoptimized />
-            )}
-          </div>
-          <div className="text-center max-w-xs">
-            <h2 className="text-xl text-foreground leading-snug" style={{ fontFamily: "var(--font-serif)" }}>{book.title}</h2>
-            <p className="text-sm text-foreground/55 mt-1">{book.author}</p>
-          </div>
+        <div className="flex-1 overflow-y-auto">
+          <TierPrompt
+            bookTitle={book.title}
+            coverUrl={onboardingCoverUrl(book.coverId, "L")}
+            onSelect={pickTier}
+          />
         </div>
-        <div className="flex flex-col gap-3">
-          {TIERS.map((t) => (
-            <button
-              key={t}
-              onClick={() => pickTier(t)}
-              className="flex items-center gap-4 w-full rounded-2xl bg-muted/60 hover:bg-muted active:scale-[0.98] px-5 py-4 text-left transition-all"
-            >
-              <span className="text-2xl">{TIER_META[t].emoji}</span>
-              <span className="flex flex-col">
-                <span className="text-sm font-medium text-foreground">{TIER_LABELS[t]}</span>
-                <span className="text-xs text-foreground/55">{TIER_META[t].sublabel}</span>
-              </span>
-            </button>
-          ))}
+        <div className="shrink-0 pt-1 pb-6 flex justify-center">
+          <button onClick={() => setConfirmLater(true)} className="text-xs text-foreground/40 underline underline-offset-4">
+            Finish later
+          </button>
         </div>
-        <button onClick={() => setConfirmLater(true)} className="mx-auto mt-5 text-xs text-foreground/40 underline underline-offset-4">
-          Finish later
-        </button>
         {confirmLater && (
           <ConfirmOverlay
             title="Finish ranking later?"
@@ -312,34 +320,23 @@ export default function OnboardingRank() {
 
   if (phase === "battle") {
     return (
-      <div className="flex-1 flex flex-col">
-        {battle ? (
-          <div className="flex-1 flex flex-col items-center px-5 pt-8 pb-8 gap-6">
-            <p className="text-xs font-medium tracking-widest uppercase text-foreground/40 font-sans text-center">
-              Which did you love more?
-            </p>
-            {/* Left = the already-placed pivot, right = the new book (accent) —
-                mirrors the in-app PairwiseCompare layout. */}
-            <div className="flex gap-4 items-start">
-              <BattleCover cover={battle.pivotCover} title={battle.pivotTitle} onPick={() => onPick("existing")} />
-              <div className="flex items-center self-center pt-8">
-                <span className="text-foreground/20 text-xs font-sans">vs</span>
-              </div>
-              <BattleCover cover={battle.newCover} title={battle.newTitle} onPick={() => onPick("new")} accent />
-            </div>
-            <button
-              onClick={() => onPick("tie")}
-              className="rounded-xl border border-dashed border-border hover:bg-muted/40 active:scale-[0.98] px-5 py-2.5 text-center transition-all"
-            >
-              <span className="text-xs text-foreground/40 font-sans">Too tough to call</span>
-            </button>
-            <button onClick={finishUp} className="mt-auto text-xs text-foreground/40 underline underline-offset-4">
-              Good enough — finish up
-            </button>
-          </div>
-        ) : (
-          <div className="flex-1" />
-        )}
+      // Onboarding shell: shared PairwiseCompare (covers / "vs" / kicker / tie),
+      // no in-app progress dots, plus the "finish up" escape pinned at the bottom.
+      <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 overflow-y-auto">
+          {battle && (
+            <PairwiseCompare
+              newBook={{ title: battle.newTitle, coverUrl: battle.newCover }}
+              existingBook={{ title: battle.pivotTitle, coverUrl: battle.pivotCover }}
+              onChoice={(c) => void onPick(c)}
+            />
+          )}
+        </div>
+        <div className="shrink-0 pt-1 pb-6 flex justify-center">
+          <button onClick={finishUp} className="text-xs text-foreground/40 underline underline-offset-4">
+            Good enough — finish up
+          </button>
+        </div>
       </div>
     )
   }
@@ -352,16 +349,29 @@ export default function OnboardingRank() {
       <p className="text-sm text-foreground/55 mt-2 mb-8">{done.count} {done.count === 1 ? "book" : "books"}, in your order.</p>
 
       <div className="flex items-end justify-center gap-3 mb-10">
-        {done.top3.map((b, i) => (
-          <div key={b.bookId} className="flex flex-col items-center gap-2">
-            <div className="relative w-[84px] aspect-[2/3] rounded-lg overflow-hidden shadow-md bg-muted">
-              {b.coverUrl
-                ? <Image src={b.coverUrl} alt="" fill sizes="84px" className="object-cover" unoptimized />
-                : <span className="absolute inset-0 flex items-center justify-center"><BookOpen className="size-5 text-muted-foreground opacity-40"  strokeWidth={1.75} /></span>}
+        {done.top3.map((b, i) => {
+          // At/above the 10-book threshold scores are frozen — lead with the
+          // score (ScoreDisplay, the app's single score treatment) and demote the
+          // rank to a quiet sans label. Below it, no scores exist yet: rank only.
+          const showScore = done.count >= SCORE_DISPLAY_THRESHOLD && b.score !== null
+          return (
+            <div key={b.bookId} className="flex flex-col items-center gap-2">
+              <div className="relative w-[84px] aspect-[2/3] rounded-lg overflow-hidden shadow-md bg-muted">
+                {b.coverUrl
+                  ? <Image src={b.coverUrl} alt="" fill sizes="84px" className="object-cover" unoptimized />
+                  : <span className="absolute inset-0 flex items-center justify-center"><BookOpen className="size-5 text-muted-foreground opacity-40"  strokeWidth={1.75} /></span>}
+              </div>
+              {showScore ? (
+                <div className="flex flex-col items-center">
+                  <ScoreDisplay score={b.score!} className="text-lg leading-none" />
+                  <span className="text-[11px] text-foreground/40 font-sans mt-0.5">#{i + 1}</span>
+                </div>
+              ) : (
+                <span className="text-base" style={{ color: "#9C4A2F", fontFamily: "var(--font-serif)", fontWeight: 500 }}>#{i + 1}</span>
+              )}
             </div>
-            <span className="text-base" style={{ color: "#9C4A2F", fontFamily: "var(--font-serif)", fontWeight: 500 }}>#{i + 1}</span>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       <button
@@ -376,27 +386,6 @@ export default function OnboardingRank() {
 }
 
 // ── Sub-components ──────────────────────────────────────────────────────────────
-
-function BattleCover({ cover, title, onPick, accent }: { cover: string | null; title: string; onPick: () => void; accent?: boolean }) {
-  return (
-    <button onClick={onPick} className="group flex flex-col items-center gap-2 w-[120px] focus-visible:outline-none">
-      <div
-        className={[
-          "relative w-[120px] aspect-[2/3] rounded-xl overflow-hidden shadow-md transition-all",
-          "group-hover:shadow-lg group-active:scale-[0.97]",
-          accent
-            ? "ring-2 ring-[#9C4A2F]/40 group-hover:ring-[#9C4A2F]/70"
-            : "group-hover:ring-2 group-hover:ring-foreground/20",
-        ].join(" ")}
-      >
-        {cover
-          ? <Image src={cover} alt="" fill sizes="120px" className="object-cover" unoptimized />
-          : <span className="absolute inset-0 flex items-center justify-center bg-muted"><BookOpen className="size-6 text-muted-foreground opacity-40"  strokeWidth={1.75} /></span>}
-      </div>
-      <span className="text-xs text-foreground/55 text-center leading-snug line-clamp-2">{title}</span>
-    </button>
-  )
-}
 
 function ConfirmOverlay({ title, body, confirmLabel, onConfirm, onCancel }: {
   title: string; body: string; confirmLabel: string; onConfirm: () => void; onCancel: () => void

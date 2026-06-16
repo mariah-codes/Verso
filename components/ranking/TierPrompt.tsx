@@ -16,8 +16,8 @@ const TIERS: { tier: Tier; sublabel: string; emoji: string }[] = [
 export function TierPrompt({ bookTitle, coverUrl, onSelect }: TierPromptProps) {
   return (
     <div className="flex flex-col items-center gap-8 px-6 py-10">
-      {/* Cover */}
-      <div className="relative w-28 aspect-[2/3] rounded-xl overflow-hidden shadow-lg bg-muted">
+      {/* Cover — the focal object of the prompt, so it gets real presence. */}
+      <div className="relative w-36 aspect-[2/3] rounded-xl overflow-hidden shadow-lg bg-muted">
         <BookCover coverUrl={coverUrl} title={bookTitle} />
       </div>
 

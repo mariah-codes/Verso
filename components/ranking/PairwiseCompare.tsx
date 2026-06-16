@@ -8,8 +8,11 @@ interface BookPreview {
 interface PairwiseCompareProps {
   newBook: BookPreview
   existingBook: BookPreview  // the pivot
-  questionNum: number        // 1-based (for progress)
-  totalEstimate: number
+  /** In-app comparison progress (1-based). Omit on surfaces that don't show it
+   *  (e.g. the onboarding game, which has its own chrome) — the covers/prompt/
+   *  tie layout is otherwise identical. */
+  questionNum?: number
+  totalEstimate?: number
   onChoice: (choice: "new" | "existing" | "tie") => void
 }
 
@@ -20,27 +23,30 @@ export function PairwiseCompare({
   totalEstimate,
   onChoice,
 }: PairwiseCompareProps) {
+  const showProgress = questionNum != null && totalEstimate != null
   return (
     <div className="flex flex-col items-center gap-6 px-5 py-8">
-      {/* Progress */}
-      <div className="flex items-center gap-1.5">
-        {Array.from({ length: totalEstimate }).map((_, i) => (
-          <div
-            key={i}
-            className={[
-              "h-1.5 rounded-full transition-all",
-              i < questionNum - 1
-                ? "w-4 bg-[#9C4A2F]"
-                : i === questionNum - 1
-                  ? "w-4 bg-[#9C4A2F]/60"
-                  : "w-4 bg-muted",
-            ].join(" ")}
-          />
-        ))}
-        <span className="text-xs text-foreground/40 ml-1 font-sans tabular-nums">
-          {questionNum}/{totalEstimate}
-        </span>
-      </div>
+      {/* Progress — in-app only */}
+      {showProgress && (
+        <div className="flex items-center gap-1.5">
+          {Array.from({ length: totalEstimate }).map((_, i) => (
+            <div
+              key={i}
+              className={[
+                "h-1.5 rounded-full transition-all",
+                i < questionNum - 1
+                  ? "w-4 bg-[#9C4A2F]"
+                  : i === questionNum - 1
+                    ? "w-4 bg-[#9C4A2F]/60"
+                    : "w-4 bg-muted",
+              ].join(" ")}
+            />
+          ))}
+          <span className="text-xs text-foreground/40 ml-1 font-sans tabular-nums">
+            {questionNum}/{totalEstimate}
+          </span>
+        </div>
+      )}
 
       {/* Prompt */}
       <p className="text-xs font-medium tracking-widest uppercase text-foreground/40 font-sans text-center">
@@ -72,11 +78,11 @@ function BookCover({ book, onClick, accent }: { book: BookPreview; onClick: () =
   return (
     <button
       onClick={onClick}
-      className="group flex flex-col items-center gap-2 w-[120px] focus-visible:outline-none"
+      className="group flex flex-col items-center gap-2 w-[132px] focus-visible:outline-none"
     >
       <div
         className={[
-          "relative w-[120px] aspect-[2/3] rounded-xl overflow-hidden shadow-md transition-all",
+          "relative w-[132px] aspect-[2/3] rounded-xl overflow-hidden shadow-md transition-all",
           "group-hover:shadow-lg group-active:scale-[0.97]",
           accent
             ? "ring-2 ring-[#9C4A2F]/40 group-hover:ring-[#9C4A2F]/70"

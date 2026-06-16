@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Check } from "lucide-react"
 import { ONBOARDING_BOOKS, onboardingCoverUrl, SELECTION_KEY } from "@/lib/onboarding-books"
+import { ScreenHeading } from "@/components/shared/ScreenHeading"
 
 export default function OnboardingCovers() {
   const router = useRouter()
@@ -55,14 +56,11 @@ export default function OnboardingCovers() {
   return (
     <div className="flex flex-col">
       {/* Heading */}
-      <div className="px-5 pt-2 pb-4">
-        <h1 className="text-3xl text-foreground leading-tight" style={{ fontFamily: "var(--font-serif)" }}>
-          Which have you read?
-        </h1>
-        <p className="text-sm text-foreground/55 mt-2">
-          The more you add, the better your taste match. Aim for 10+.
-        </p>
-      </div>
+      <ScreenHeading
+        title="Which have you read?"
+        subtitle="The more you add, the better your taste match. Aim for 10+."
+        className="px-5 pt-2 pb-4"
+      />
 
       {/* Grid — flows in the document; the page scrolls on the window. */}
       <div className="px-5 pb-6">

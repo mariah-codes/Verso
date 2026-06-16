@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { BookOpen, BookPlus, UserPlus } from "lucide-react"
 import { BookCover } from "@/components/book/BookCover"
+import { ScreenHeading } from "@/components/shared/ScreenHeading"
 import type { EnrichedPick } from "@/lib/weekly-picks-data"
 
 interface WeeklyPicksSectionProps {
@@ -49,23 +50,16 @@ export function WeeklyPicksSection({ picks, loading }: WeeklyPicksSectionProps) 
 // ── Header ──────────────────────────────────────────────────────────────────
 
 function Header() {
+  // Shared screen heading — same treatment as every other top-level title (the
+  // Georgia serif fallback now lives in ScreenHeading). One heading for all three
+  // states (loading/populated/cold-start) so they stay identical.
   return (
-    // No own horizontal padding — the parent px-5 wrapper provides the left inset
-    // that the strip below shares.
-    <div className="mb-4">
-      {/* Single shared heading for all three states (loading/populated/cold-start)
-          so they're guaranteed identical. Explicit serif fallback stack means the
-          brief next/font "swap" window degrades to Georgia, not the browser default
-          (Times) — which is what made the populated state look "off" before. */}
-      <h2
-        className="text-2xl text-foreground"
-        style={{ fontFamily: "var(--font-serif), Georgia, 'Times New Roman', serif" }}
-      >
-        This week’s picks
-      </h2>
-      {/* Supporting label tier (/55) — matches the feed's "reviewed" verb. */}
-      <p className="text-sm text-foreground/55 mt-0.5">From friends who share your taste</p>
-    </div>
+    <ScreenHeading
+      title="This week’s picks"
+      subtitle="From friends who share your taste"
+      size="text-2xl"
+      className="mb-4"
+    />
   )
 }
 
