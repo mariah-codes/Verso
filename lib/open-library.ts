@@ -9,7 +9,7 @@ import { ONBOARDING_BOOKS, onboardingCoverUrl } from "./onboarding-books"
 const COVERS = "https://covers.openlibrary.org/b"
 
 /**
- * Hand-verified covers for the 51 curated onboarding works, keyed by OL work id.
+ * Hand-verified covers for the 66 curated onboarding works, keyed by OL work id.
  * Live-search cover quality is best-effort (OL surfaces scans for some editions
  * and there's no reliable way to detect them), but the curated books — exactly
  * the popular ones people search — have clean covers we already vetted. So when a

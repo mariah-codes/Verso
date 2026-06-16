@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Check } from "lucide-react"
@@ -9,6 +9,28 @@ import { ONBOARDING_BOOKS, onboardingCoverUrl, SELECTION_KEY } from "@/lib/onboa
 export default function OnboardingCovers() {
   const router = useRouter()
   const [selected, setSelected] = useState<Set<string>>(new Set())
+
+  // Viewport-fixed bottom-fade scroll hint: signals "there's more below" the
+  // moment the page loads (the grid runs past the fold), and fades out once the
+  // window is scrolled to within ~60px of the bottom — by then the Continue
+  // button at the end of the page is naturally in view.
+  const [showFade, setShowFade] = useState(true)
+
+  useEffect(() => {
+    const update = () => {
+      const doc = document.documentElement
+      const nearBottom = window.innerHeight + window.scrollY >= doc.scrollHeight - 60
+      // Also hide if the page doesn't overflow (nothing to scroll).
+      setShowFade(!nearBottom && doc.scrollHeight > window.innerHeight + 1)
+    }
+    update()
+    window.addEventListener("scroll", update, { passive: true })
+    window.addEventListener("resize", update)
+    return () => {
+      window.removeEventListener("scroll", update)
+      window.removeEventListener("resize", update)
+    }
+  }, [])
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -31,9 +53,9 @@ export default function OnboardingCovers() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-h-0">
+    <div className="flex flex-col">
       {/* Heading */}
-      <div className="px-5 pt-2 pb-4 shrink-0">
+      <div className="px-5 pt-2 pb-4">
         <h1 className="text-3xl text-foreground leading-tight" style={{ fontFamily: "var(--font-serif)" }}>
           Which have you read?
         </h1>
@@ -42,9 +64,8 @@ export default function OnboardingCovers() {
         </p>
       </div>
 
-      {/* Scrolling grid — pb-4 only: the CTA below is a flex footer, not an
-          overlay, so the grid needs just normal end spacing (no void). */}
-      <div className="flex-1 overflow-y-auto px-5 pb-4">
+      {/* Grid — flows in the document; the page scrolls on the window. */}
+      <div className="px-5 pb-6">
         <div className="grid grid-cols-3 gap-3">
           {ONBOARDING_BOOKS.map((b) => {
             const url = onboardingCoverUrl(b.coverId, "M")
@@ -87,10 +108,10 @@ export default function OnboardingCovers() {
         </div>
       </div>
 
-      {/* CTA footer — always tappable (works at 0), live count. Light terracotta
-          at rest, full #9C4A2F once a book is selected (the app's primary-button
-          treatment, via opacity like the review/comment submit buttons). */}
-      <div className="shrink-0 border-t border-border/50 bg-background px-5 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
+      {/* CTA — at the natural end of the page; comes into view at the bottom of
+          the scroll (which is also when the fade hint clears). Live count; light
+          terracotta at rest, full #9C4A2F once a book is selected. */}
+      <div className="border-t border-border/50 bg-background px-5 pt-4 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
         <button
           onClick={handleContinue}
           className={`w-full rounded-xl py-3.5 text-base font-medium text-white transition-opacity ${
@@ -101,6 +122,18 @@ export default function OnboardingCovers() {
           Continue{selected.size > 0 ? ` · ${selected.size} selected` : ""}
         </button>
       </div>
+
+      {/* Bottom-fade scroll hint — viewport-fixed at the bottom of the screen,
+          above the grid but below nav chrome. pointer-events off so taps pass
+          through to covers. Fades out near the bottom (Continue in view). */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-x-0 bottom-0 h-20 z-30 transition-opacity duration-300"
+        style={{
+          background: "linear-gradient(to bottom, rgba(250,248,244,0), #FAF8F4)",
+          opacity: showFade ? 1 : 0,
+        }}
+      />
     </div>
   )
 }

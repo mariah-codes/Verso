@@ -1,5 +1,5 @@
 // ── Onboarding — curated book data (pure, no Supabase) ────────────────────────
-// The 50-book grid + cover URLs. Kept separate from lib/onboarding.ts (which
+// The 66-book grid + cover URLs. Kept separate from lib/onboarding.ts (which
 // pulls the Supabase client) so the cover grid, dev preview, etc. can import the
 // data without dragging persistence into a server component.
 

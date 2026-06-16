@@ -88,6 +88,14 @@
     "coverId": 14826001
   },
   {
+    "id": "pride-and-prejudice",
+    "title": "Pride and Prejudice",
+    "author": "Jane Austen",
+    "category": "classic",
+    "coverId": 15223895,
+    "olid": "OL66554W"
+  },
+  {
     "id": "gone-girl",
     "title": "Gone Girl",
     "author": "Gillian Flynn",
@@ -110,6 +118,14 @@
     "category": "nonfiction",
     "coverId": 8314077,
     "olid": "OL18139176W"
+  },
+  {
+    "id": "the-great-gatsby",
+    "title": "The Great Gatsby",
+    "author": "F. Scott Fitzgerald",
+    "category": "classic",
+    "coverId": 14811162,
+    "olid": "OL468431W"
   },
   {
     "id": "a-little-life",
@@ -136,6 +152,14 @@
     "olid": "OL18012166W"
   },
   {
+    "id": "to-kill-a-mockingbird",
+    "title": "To Kill a Mockingbird",
+    "author": "Harper Lee",
+    "category": "classic",
+    "coverId": 14817243,
+    "olid": "OL3140822W"
+  },
+  {
     "id": "quiet",
     "title": "Quiet",
     "author": "Susan Cain",
@@ -150,6 +174,14 @@
     "category": "literary",
     "coverId": 8044605,
     "olid": "OL17762217W"
+  },
+  {
+    "id": "1984",
+    "title": "1984",
+    "author": "George Orwell",
+    "category": "classic",
+    "coverId": 14653131,
+    "olid": "OL1168083W"
   },
   {
     "id": "born-a-crime",
@@ -176,6 +208,14 @@
     "olid": "OL1063267W"
   },
   {
+    "id": "jane-eyre",
+    "title": "Jane Eyre",
+    "author": "Charlotte Bronte",
+    "category": "classic",
+    "coverId": 14699965,
+    "olid": "OL1095427W"
+  },
+  {
     "id": "demon-copperhead",
     "title": "Demon Copperhead",
     "author": "Barbara Kingsolver",
@@ -198,6 +238,14 @@
     "category": "literary",
     "coverId": 8111914,
     "olid": "OL17821431W"
+  },
+  {
+    "id": "the-catcher-in-the-rye",
+    "title": "The Catcher in the Rye",
+    "author": "J. D. Salinger",
+    "category": "classic",
+    "coverId": 14813227,
+    "olid": "OL3335245W"
   },
   {
     "id": "the-anxious-generation",
@@ -224,6 +272,14 @@
     "olid": "OL1865528W"
   },
   {
+    "id": "the-book-thief",
+    "title": "The Book Thief",
+    "author": "Markus Zusak",
+    "category": "literary",
+    "coverId": 8153054,
+    "olid": "OL5819456W"
+  },
+  {
     "id": "it-ends-with-us",
     "title": "It Ends with Us",
     "author": "Colleen Hoover",
@@ -238,6 +294,14 @@
     "category": "genre",
     "olid": "OL5735363W",
     "coverId": 15139410
+  },
+  {
+    "id": "harry-potter-sorcerers-stone",
+    "title": "Harry Potter and the Sorcerer's Stone",
+    "author": "J. K. Rowling",
+    "category": "genre",
+    "coverId": 14656855,
+    "olid": "OL82563W"
   },
   {
     "id": "homegoing",
@@ -264,6 +328,14 @@
     "olid": "OL16520879W"
   },
   {
+    "id": "twilight",
+    "title": "Twilight",
+    "author": "Stephenie Meyer",
+    "category": "genre",
+    "coverId": 12641977,
+    "olid": "OL5720023W"
+  },
+  {
     "id": "stoner",
     "title": "Stoner",
     "author": "John Williams",
@@ -286,6 +358,14 @@
     "category": "genre",
     "olid": "OL81633W",
     "coverId": 15090478
+  },
+  {
+    "id": "the-midnight-library",
+    "title": "The Midnight Library",
+    "author": "Matt Haig",
+    "category": "contemporary",
+    "coverId": 10313767,
+    "olid": "OL20965973W"
   },
   {
     "id": "a-gentleman-in-moscow",
@@ -312,6 +392,14 @@
     "olid": "OL16793865W"
   },
   {
+    "id": "the-nightingale",
+    "title": "The Nightingale",
+    "author": "Kristin Hannah",
+    "category": "contemporary",
+    "coverId": 8314147,
+    "olid": "OL17116910W"
+  },
+  {
     "id": "east-of-eden",
     "title": "East of Eden",
     "author": "John Steinbeck",
@@ -334,6 +422,14 @@
     "category": "genre",
     "coverId": 9407338,
     "olid": "OL19096402W"
+  },
+  {
+    "id": "intermezzo",
+    "title": "Intermezzo",
+    "author": "Sally Rooney",
+    "category": "contemporary",
+    "coverId": 14836043,
+    "olid": "OL37949460W"
   },
   {
     "id": "my-year-of-rest-and-relaxation",
@@ -360,6 +456,14 @@
     "olid": "OL19744024W"
   },
   {
+    "id": "james-everett",
+    "title": "James",
+    "author": "Percival Everett",
+    "category": "contemporary",
+    "coverId": 15094964,
+    "olid": "OL36506504W"
+  },
+  {
     "id": "count-of-monte-cristo",
     "title": "The Count of Monte Cristo",
     "author": "Alexandre Dumas",
@@ -374,6 +478,14 @@
     "category": "contemporary",
     "coverId": 15179919,
     "olid": "OL25344431W"
+  },
+  {
+    "id": "the-unbearable-lightness-of-being",
+    "title": "The Unbearable Lightness of Being",
+    "author": "Milan Kundera",
+    "category": "translated",
+    "coverId": 10817951,
+    "olid": "OL8972751W"
   },
   {
     "id": "a-court-of-thorns-and-roses",
@@ -398,6 +510,14 @@
     "category": "nonfiction",
     "coverId": 10678221,
     "olid": "OL24218388W"
+  },
+  {
+    "id": "the-alchemist",
+    "title": "The Alchemist",
+    "author": "Paulo Coelho",
+    "category": "translated",
+    "coverId": 15121528,
+    "olid": "OL796465W"
   },
   {
     "id": "norwegian-wood",
