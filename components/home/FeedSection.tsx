@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { BookOpen, Bookmark, Heart, MessageCircle, Users } from "lucide-react"
 import { BookCover } from "@/components/book/BookCover"
 import { TIER_LABELS, type Tier } from "@/lib/ranking"
@@ -170,19 +171,34 @@ function FeedItem({
     <article className="rounded-2xl border border-[rgba(31,27,22,0.07)] bg-[#FCFBF9] px-4 py-3">
       {/* Top row (Layout C): avatar → text → cover, vertically centered */}
       <div className="flex items-center gap-3">
-        {/* Avatar (left) — leading identity; shared Avatar so it matches profiles */}
-        <Avatar
-          displayName={actor.displayName}
-          photoUrl={actor.photoUrl}
-          size={38}
-          initialsClassName="text-xs"
-        />
+        {/* Avatar + first-name — single tappable target → actor's profile */}
+        <Link
+          href={actor.username ? `/${actor.username}` : `/user/${actor.id}`}
+          aria-label={`View ${actor.displayName}'s profile`}
+          onClick={(e) => e.stopPropagation()}
+          className="flex items-center gap-3 shrink-0 min-h-[44px] rounded-lg -ml-0.5 pl-0.5 active:opacity-70 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Avatar
+            displayName={actor.displayName}
+            photoUrl={actor.photoUrl}
+            size={38}
+            initialsClassName="text-xs"
+          />
+        </Link>
 
         {/* Text column (middle) */}
         <div className="flex-1 min-w-0">
-          {/* Line 1 — actor + action · time */}
+          {/* Line 1 — actor + action · time. Actor name is also a profile link
+              so keyboard / screen-reader users have a second in-flow target. */}
           <p className="text-sm leading-snug">
-            <span className="font-medium text-foreground">{firstName(actor.displayName)}</span>{" "}
+            <Link
+              href={actor.username ? `/${actor.username}` : `/user/${actor.id}`}
+              aria-label={`View ${actor.displayName}'s profile`}
+              onClick={(e) => e.stopPropagation()}
+              className="font-medium text-foreground active:opacity-70 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+            >
+              {firstName(actor.displayName)}
+            </Link>{" "}
             <span className="text-foreground/55">{action}</span>
             <span className="text-foreground/40"> · {formatRelativeTime(timestamp)}</span>
           </p>
