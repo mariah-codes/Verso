@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next"
-import { Inter, EB_Garamond } from "next/font/google"
+import { Inter, EB_Garamond, Cormorant_Garamond } from "next/font/google"
 import "./globals.css"
 import { PreventZoom } from "@/components/shared/PreventZoom"
 
@@ -11,6 +11,15 @@ const inter = Inter({
 
 const ebGaramond = EB_Garamond({
   variable: "--font-serif",
+  subsets: ["latin"],
+  display: "swap",
+})
+
+// Landing/marketing WORDMARK only — never applied in-app (EB Garamond stays the
+// in-app serif). Exposed as --font-cormorant; used solely on the "Verso" wordmark.
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
+  weight: "500",
   subsets: ["latin"],
   display: "swap",
 })
@@ -94,7 +103,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${ebGaramond.variable} h-full antialiased`}
+      className={`${inter.variable} ${ebGaramond.variable} ${cormorant.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <PreventZoom />
